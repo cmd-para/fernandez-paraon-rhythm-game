@@ -557,7 +557,7 @@ document.addEventListener('keydown', e => {
   if (isRecording && audio && !audio.paused && km[e.code]) { e.preventDefault(); captureBeat(km[e.code]); }
 });
 
-// ── Export ──
+// ── Export ── //
 function toggleExport() {
   const box = document.getElementById('exportBox');
   if (box.style.display==='block') { box.style.display='none'; return; }
