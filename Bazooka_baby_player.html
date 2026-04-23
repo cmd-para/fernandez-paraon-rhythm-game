@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rhythm Game</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#08080f;
+  --panel:#0f0f1a;
+  --border:#1e1e30;
+  --accent:#7c6fff;
+  --accent2:#ff6b9d;
+  --text:#e0deff;
+  --muted:#3a3a55;
+  --cell:148px;
+  --gap:10px;
+}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Share Tech Mono',monospace;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:20px;
+  padding:32px 24px;
+  overflow-x:hidden;
+}
+
+/* ── HEADER ── */
+.hdr{
+  display:flex;align-items:center;gap:16px;
+  font-family:'Orbitron',sans-serif;
+  font-size:11px;letter-spacing:0.3em;color:var(--muted);text-transform:uppercase;
+}
+.hdr-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
+
+/* ── LOAD BAR ── */
+.load-bar{
+  display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;
+}
+label.lbtn, button.lbtn{
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;letter-spacing:0.1em;
+  padding:5px 12px;
+  background:transparent;color:var(--muted);
+  border:1px solid var(--border);border-radius:4px;
+  cursor:pointer;transition:all 0.15s;
+  white-space:nowrap;display:inline-flex;align-items:center;gap:6px;
+}
+label.lbtn:hover,button.lbtn:hover{border-color:var(--accent);color:var(--accent);}
+label.lbtn.ok{border-color:#2a4a2a;color:#50fa7b;}
+label.lbtn.ok:hover{border-color:#50fa7b;}
+.sep{color:var(--border);font-size:14px;}
+
+/* ── GRID ── */
+.grid-wrap{position:relative;display:inline-block;}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,var(--cell));
+  grid-template-rows:repeat(3,var(--cell));
+  gap:var(--gap);
+  position:relative;z-index:1;
+}
+
+.cell{
+  width:var(--cell);height:var(--cell);
+  background:var(--panel);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+  user-select:none;
+}
+
+.cell img{
+  width:100%;height:100%;object-fit:cover;
+  position:absolute;inset:0;border-radius:8px;pointer-events:none;z-index:0;
+}
+
+.cell-lbl{
+  font-size:8px;color:var(--muted);letter-spacing:0.12em;
+  text-align:center;z-index:2;pointer-events:none;
+}
+
+/* center shooter cell */
+.cell.shooter{border-color:#2a2a40;background:#0a0a14;cursor:default;}
+
+/* ── CLOSING RING INDICATOR ── */
+/*
+  Two elements per cell:
+  .ring-outer — large ring that shrinks inward toward the cell edge
+  .ring-inner — the "hit zone" ring sitting at the cell edge permanently
+  We animate ring-outer's scale from ~1.8 → 1.0 over the approach window,
+  then fire a hit flash.
+*/
+
+.ring-outer{
+  position:absolute;
+  inset:0;
+  border-radius:10px;
+  border:3px solid transparent;
+  z-index:3;
+  pointer-events:none;
+  opacity:0;
+  transform:scale(1.7);
+  transition:none;
+}
+
+.ring-inner{
+  position:absolute;
+  inset:2px;
+  border-radius:9px;
+  border:2px solid transparent;
+  z-index:3;
+  pointer-events:none;
+  opacity:0;
+}
+
+/* Approach animation: ring-outer closes in */
+@keyframes approach{
+  0%  {opacity:0;transform:scale(1.7);}
+  8%  {opacity:1;transform:scale(1.7);}
+  90% {opacity:1;transform:scale(1.02);}
+  100%{opacity:0;transform:scale(1.0);}
+}
+
+/* Hit flash on the cell itself */
+@keyframes hitFlash{
+  0%  {box-shadow:0 0 0 3px var(--hit-color,#fff),0 0 30px var(--hit-color,#fff);}
+  100%{box-shadow:none;}
+}
+.cell.hit-flash{animation:hitFlash 0.3s ease-out forwards;}
+
+/* Dim state between beats */
+.cell.armed{border-color:var(--cell-color,var(--border));}
+.cell.armed .ring-inner{opacity:0.25;}
+
+/* ── PROGRESS BAR ── */
+.prog-wrap{
+  width:100%;max-width:510px;
+  position:relative;height:28px;
+  background:#0a0a14;border:1px solid var(--border);border-radius:5px;
+  overflow:hidden;cursor:pointer;
+}
+.prog-fill{position:absolute;top:0;left:0;height:100%;background:rgba(124,111,255,0.12);pointer-events:none;}
+.prog-head{position:absolute;top:0;width:2px;height:100%;background:var(--accent);pointer-events:none;}
+.prog-time{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--muted);pointer-events:none;letter-spacing:0.06em;}
+.beat-tick{position:absolute;top:0;width:2px;height:100%;opacity:0.6;pointer-events:none;}
+
+/* ── CONTROLS ── */
+.controls{display:flex;gap:8px;align-items:center;}
+.btn{
+  font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:0.08em;
+  padding:7px 14px;background:var(--panel);color:var(--text);
+  border:1px solid var(--border);border-radius:5px;
+  cursor:pointer;transition:all 0.15s;
+}
+.btn:hover{border-color:var(--accent);background:#14142a;}
+.btn:disabled{opacity:0.25;cursor:not-allowed;}
+.btn.primary{border-color:var(--accent);color:var(--accent);}
+.btn.primary:hover{background:var(--accent);color:#fff;}
+
+/* ── STATUS ── */
+.status{font-size:10px;color:var(--muted);letter-spacing:0.1em;text-align:center;min-height:14px;}
+.status .hi{color:var(--accent);}
+.status .ok{color:#50fa7b;}
+.status .err{color:#ff5555;}
+
+/* ── SCORE POPUP ── */
+.score-popup{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:'Orbitron',sans-serif;font-size:48px;font-weight:900;
+  pointer-events:none;z-index:100;opacity:0;
+}
+@keyframes scoreAnim{
+  0%  {opacity:1;transform:translate(-50%,-60%) scale(1.2);}
+  60% {opacity:1;transform:translate(-50%,-70%) scale(1);}
+  100%{opacity:0;transform:translate(-50%,-80%) scale(0.9);}
+}
+
+input[type=file]{display:none;}
+</style>
+</head>
+<body>
+
+<div class="hdr"><div class="hdr-dot"></div>RHYTHM GAME<div class="hdr-dot"></div></div>
+
+<!-- LOAD BAR -->
+<div class="load-bar">
+  <label for="mp3In" class="lbtn" id="lblMp3">&#9834; load mp3</label>
+  <span class="sep">|</span>
+  <label for="cfgIn" class="lbtn" id="lblCfg">&#123;&#125; load config</label>
+  <span class="sep">|</span>
+  <button class="lbtn" id="btnDemo" onclick="loadDemo()">&#9733; use demo data</button>
+</div>
+<input type="file" id="mp3In" accept="audio/*">
+<input type="file" id="cfgIn" accept=".json,.txt,application/json,text/plain,text/javascript,.js">
+
+<!-- GRID -->
+<div class="grid-wrap">
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="status" id="status">load an mp3 and a timing config (or use demo data)</div>
+
+<!-- PROGRESS -->
+<div class="prog-wrap" id="progWrap">
+  <div class="prog-fill" id="progFill" style="width:0%"></div>
+  <div class="prog-head" id="progHead" style="left:0%"></div>
+  <div class="prog-time" id="progTime">0:00 / 0:00</div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <button class="btn primary" id="btnPlay" onclick="togglePlay()" disabled>&#9654; play</button>
+  <button class="btn" id="btnStop" onclick="stopGame()" disabled>&#9632; stop</button>
+</div>
+
+<!-- hidden score popup -->
+<div class="score-popup" id="scorePopup"></div>
+
+<script>
+// ── BOX DEFINITIONS ──
+const CELLS=[
+  {id:'tl',label:'TL'},{id:'tc',label:'TC'},{id:'tr',label:'TR'},
+  {id:'ml',label:'ML'},{id:'center',label:''},{id:'mr',label:'MR'},
+  {id:'bl',label:'BL'},{id:'bc',label:'BC'},{id:'br',label:'BR'},
+];
+const DIRS=CELLS.filter(c=>c.id!=='center');
+
+const BOX_COLORS={
+  tl:'#7c6fff',tc:'#ff6b9d',tr:'#6bffda',
+  ml:'#ffb86c',mr:'#ff5555',
+  bl:'#50fa7b',bc:'#f1fa8c',br:'#8be9fd',
+};
+
+// Approach window in seconds — ring starts closing this many seconds before beat
+const APPROACH = 1.8;
+
+// ── STATE ──
+let audio=null, audioDur=0, rafId=null;
+let beats=[];          // [{box, time}] sorted by time
+let scheduled=[];      // copy of beats we tick through
+let nextBeatIdx=0;
+let activeRings={};    // box -> {timeoutId}
+
+// ── BUILD GRID ──
+const gridEl=document.getElementById('grid');
+CELLS.forEach(c=>{
+  const cell=document.createElement('div');
+  cell.className='cell'+(c.id==='center'?' shooter':'');
+  cell.id='cell-'+c.id;
+
+  if(c.id!=='center'){
+    const color=BOX_COLORS[c.id];
+    // ring elements
+    const ro=document.createElement('div'); ro.className='ring-outer'; ro.id='ro-'+c.id;
+    ro.style.borderColor=color;
+    const ri=document.createElement('div'); ri.className='ring-inner'; ri.id='ri-'+c.id;
+    ri.style.borderColor=color;
+    ri.style.setProperty('--cell-color',color);
+    cell.appendChild(ro);
+    cell.appendChild(ri);
+    cell.style.setProperty('--cell-color',color);
+    cell.style.setProperty('--hit-color',color);
+  }
+
+  const lbl=document.createElement('div');
+  lbl.className='cell-lbl';
+  lbl.id='lbl-'+c.id;
+  lbl.textContent=c.label;
+  cell.appendChild(lbl);
+
+  gridEl.appendChild(cell);
+});
+
+// ── FILE INPUTS ──
+document.getElementById('mp3In').addEventListener('change',function(){
+  const f=this.files[0]; if(!f) return;
+  if(audio){audio.pause();audio=null;}
+  cancelAnimationFrame(rafId);
+  audio=new Audio();
+  audio.preload='auto';
+  audio.addEventListener('loadedmetadata',()=>{
+    audioDur=audio.duration;
+    document.getElementById('lblMp3').textContent='&#9834; '+f.name.slice(0,18);
+    document.getElementById('lblMp3').classList.add('ok');
+    tryEnable();
+    updateProg(0);
+    setStatus('mp3 loaded: <span class="ok">'+f.name+'</span>');
+  });
+  audio.addEventListener('error',()=>setStatus('<span class="err">audio load failed</span>'));
+  audio.addEventListener('ended',()=>{onSongEnd();});
+  audio.src=URL.createObjectURL(f);
+  audio.load();
+});
+
+document.getElementById('cfgIn').addEventListener('change',function(){
+  const f=this.files[0]; if(!f) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      parseConfigText(e.target.result);
+      document.getElementById('lblCfg').textContent='{} '+f.name.slice(0,18);
+      document.getElementById('lblCfg').classList.add('ok');
+      tryEnable();
+      setStatus('config loaded: <span class="ok">'+f.name+' — '+beats.length+' beats</span>');
+    }catch(err){
+      setStatus('<span class="err">could not parse config: '+err.message+'</span>');
+    }
+  };
+  reader.readAsText(f);
+});
+
+// ── CONFIG PARSING ──
+// Handles the exact JS export format from the editor:
+//   const SPAWN_TIMING = {...};
+//   const RECORDED_BEATS = [...];
+// Also handles plain JSON objects or arrays.
+function parseConfigText(raw){
+  beats=[];
+
+  // Priority 1: extract RECORDED_BEATS array from JS export
+  const rbMatch = raw.match(/const\s+RECORDED_BEATS\s*=\s*(\[[\s\S]*?\])\s*;/);
+  if(rbMatch){
+    try{
+      const arr=JSON.parse(rbMatch[1]);
+      beats=arr.map(b=>({box:b.box||b.id,time:parseFloat(b.time)}));
+    }catch(e){}
+  }
+
+  // Priority 2: extract SPAWN_TIMING if no recorded beats found
+  if(!beats.length){
+    const stMatch = raw.match(/const\s+SPAWN_TIMING\s*=\s*(\{[\s\S]*?\})\s*;/);
+    if(stMatch){
+      try{
+        const obj=JSON.parse(stMatch[1]);
+        Object.entries(obj).forEach(([id,v])=>{
+          if(v.spawnTime>0) beats.push({box:id,time:parseFloat(v.spawnTime)});
+        });
+      }catch(e){}
+    }
+  }
+
+  // Priority 3: plain JSON fallback
+  if(!beats.length){
+    let data;
+    try{ data=JSON.parse(raw); }catch(e){ throw new Error('not valid JS config or JSON'); }
+    if(Array.isArray(data)){
+      beats=data.map(b=>({box:b.box||b.id,time:parseFloat(b.time)}));
+    } else if(data.recordedBeats){
+      beats=data.recordedBeats.map(b=>({box:b.box||b.id,time:parseFloat(b.time)}));
+    } else if(data.spawnTiming){
+      Object.entries(data.spawnTiming).forEach(([id,v])=>{
+        if(v.spawnTime>0) beats.push({box:id,time:parseFloat(v.spawnTime)});
+      });
+    }
+  }
+
+  beats=beats.filter(b=>DIRS.find(d=>d.id===b.box) && isFinite(b.time) && b.time>=0);
+  if(!beats.length) throw new Error('no valid beats found in file');
+  beats.sort((a,b)=>a.time-b.time);
+  renderBeatTicks();
+}
+
+// ── DEMO DATA ──
+function loadDemo(){
+  beats=[
+    {box:'tl',time:1.0},{box:'tc',time:1.5},{box:'tr',time:2.0},
+    {box:'mr',time:2.5},{box:'br',time:3.0},{box:'bc',time:3.5},
+    {box:'bl',time:4.0},{box:'ml',time:4.5},{box:'tl',time:5.0},
+    {box:'tr',time:5.5},{box:'tc',time:6.0},{box:'mr',time:6.8},
+    {box:'bc',time:7.4},{box:'tl',time:8.0},{box:'br',time:8.6},
+    {box:'ml',time:9.0},{box:'tc',time:9.5},{box:'bl',time:10.2},
+  ];
+  renderBeatTicks();
+  document.getElementById('lblCfg').textContent='{} demo config';
+  document.getElementById('lblCfg').classList.add('ok');
+
+  // also generate a silent demo audio context so play works
+  if(!audio||audioDur===0){
+    // use AudioContext to create a silent 12s buffer
+    try{
+      const actx=new (window.AudioContext||window.webkitAudioContext)();
+      const buf=actx.createBuffer(1,actx.sampleRate*12,actx.sampleRate);
+      const blob=bufferToWav(buf);
+      audio=new Audio(); audio.preload='auto';
+      audio.addEventListener('loadedmetadata',()=>{
+        audioDur=audio.duration;
+        document.getElementById('lblMp3').textContent='&#9834; silent demo';
+        document.getElementById('lblMp3').classList.add('ok');
+        tryEnable(); updateProg(0);
+      });
+      audio.addEventListener('ended',onSongEnd);
+      audio.src=URL.createObjectURL(blob);
+      audio.load();
+    }catch(e){
+      // fallback: just mark mp3 as ok with a fake duration
+      audioDur=12; tryEnable();
+      document.getElementById('lblMp3').textContent='&#9834; silent demo';
+      document.getElementById('lblMp3').classList.add('ok');
+    }
+  }
+  tryEnable();
+  setStatus('demo loaded — <span class="ok">press play</span>');
+}
+
+// minimal WAV encoder for silent buffer
+function bufferToWav(buffer){
+  const numCh=buffer.numberOfChannels,sr=buffer.sampleRate;
+  const len=buffer.length*numCh*2;
+  const ab=new ArrayBuffer(44+len);
+  const view=new DataView(ab);
+  const writeStr=(o,s)=>{for(let i=0;i<s.length;i++)view.setUint8(o+i,s.charCodeAt(i));};
+  writeStr(0,'RIFF'); view.setUint32(4,36+len,true);
+  writeStr(8,'WAVE'); writeStr(12,'fmt ');
+  view.setUint32(16,16,true); view.setUint16(20,1,true);
+  view.setUint16(22,numCh,true); view.setUint32(24,sr,true);
+  view.setUint32(28,sr*numCh*2,true); view.setUint16(32,numCh*2,true);
+  view.setUint16(34,16,true); writeStr(36,'data'); view.setUint32(40,len,true);
+  let offset=44;
+  for(let i=0;i<buffer.length;i++){
+    for(let ch=0;ch<numCh;ch++){
+      const s=Math.max(-1,Math.min(1,buffer.getChannelData(ch)[i]));
+      view.setInt16(offset,s<0?s*0x8000:s*0x7fff,true); offset+=2;
+    }
+  }
+  return new Blob([ab],{type:'audio/wav'});
+}
+
+// ── ENABLE/DISABLE PLAY ──
+function tryEnable(){
+  const ok=beats.length>0&&(audioDur>0||audio);
+  document.getElementById('btnPlay').disabled=!ok;
+  document.getElementById('btnStop').disabled=!ok;
+}
+
+// ── PLAYBACK ──
+function togglePlay(){
+  if(!audio) return;
+  if(audio.paused){
+    audio.play().catch(e=>setStatus('<span class="err">'+e.message+'</span>'));
+    document.getElementById('btnPlay').textContent='\u275a\u275a pause';
+    startLoop();
+  } else {
+    audio.pause(); cancelAnimationFrame(rafId);
+    document.getElementById('btnPlay').textContent='\u25b6 play';
+    // cancel any pending ring animations
+    clearAllRings();
+  }
+}
+
+function stopGame(){
+  if(!audio) return;
+  audio.pause(); audio.currentTime=0;
+  cancelAnimationFrame(rafId);
+  nextBeatIdx=0; clearAllRings();
+  updateProg(0);
+  document.getElementById('btnPlay').textContent='\u25b6 play';
+  setStatus('stopped');
+}
+
+function onSongEnd(){
+  cancelAnimationFrame(rafId);
+  nextBeatIdx=0; clearAllRings();
+  document.getElementById('btnPlay').textContent='\u25b6 play';
+  setStatus('<span class="ok">song ended</span>');
+}
+
+// ── MAIN LOOP ──
+function startLoop(){
+  // figure out which beat to start from based on current audio time
+  const t=audio.currentTime;
+  nextBeatIdx=beats.findIndex(b=>(b.time-APPROACH)>t);
+  if(nextBeatIdx===-1) nextBeatIdx=beats.length;
+
+  // kick off any beats whose approach window has already started
+  beats.forEach((b,i)=>{
+    if(b.time-APPROACH<=t && b.time>t) scheduleRing(b,i,t);
+  });
+
+  function tick(){
+    if(!audio||audio.paused) return;
+    const now=audio.currentTime;
+    updateProg(now);
+
+    // schedule upcoming beats whose approach window just began
+    while(nextBeatIdx<beats.length && beats[nextBeatIdx].time-APPROACH<=now){
+      scheduleRing(beats[nextBeatIdx],nextBeatIdx,now);
+      nextBeatIdx++;
+    }
+    rafId=requestAnimationFrame(tick);
+  }
+  rafId=requestAnimationFrame(tick);
+}
+
+// ── RING SCHEDULING ──
+function scheduleRing(beat,idx,now){
+  const {box,time}=beat;
+  const delay=(time-APPROACH-now)*1000;   // ms until ring should start
+  const duration=APPROACH*1000;            // ms for ring to close
+
+  const start=()=>{
+    const ro=document.getElementById('ro-'+box);
+    const cell=document.getElementById('cell-'+box);
+    if(!ro||!cell) return;
+
+    // arm the inner ring
+    cell.classList.add('armed');
+
+    // play approach animation
+    ro.style.animation='none';
+    ro.offsetHeight; // reflow
+    ro.style.animation=`approach ${duration}ms ease-in forwards`;
+
+    // schedule the hit at beat time
+    const hitDelay=APPROACH*1000;
+    const tid=setTimeout(()=>{
+      triggerHit(box,time);
+    },hitDelay);
+
+    activeRings[box+'_'+idx]={ro,tid};
+  };
+
+  if(delay<=0){
+    // already in window — start now with adjusted duration
+    const elapsed=-delay/1000;
+    const remaining=APPROACH-elapsed;
+    if(remaining>0.05){
+      const ro=document.getElementById('ro-'+box);
+      const cell=document.getElementById('cell-'+box);
+      if(!ro||!cell) return;
+      const pct=elapsed/APPROACH;
+      const startScale=1.7-pct*0.7;
+      // inject adjusted keyframes dynamically
+      ro.style.animation='none'; ro.offsetHeight;
+      const adjDur=remaining*1000;
+      // set starting transform via css variable
+      ro.style.setProperty('--start-scale',startScale);
+      ro.style.animation=`approach ${adjDur}ms ease-in forwards`;
+      cell.classList.add('armed');
+      const tid=setTimeout(()=>triggerHit(box,time),adjDur);
+      activeRings[box+'_'+idx]={ro,tid};
+    }
+  } else {
+    const sid=setTimeout(start,delay);
+    activeRings[box+'_'+idx]={sid};
+  }
+}
+
+function triggerHit(box,time){
+  const cell=document.getElementById('cell-'+box);
+  const ro=document.getElementById('ro-'+box);
+  if(!cell) return;
+  cell.classList.remove('armed');
+  cell.classList.add('hit-flash');
+  setTimeout(()=>cell.classList.remove('hit-flash'),350);
+  if(ro){ro.style.animation='none';}
+}
+
+function clearAllRings(){
+  Object.values(activeRings).forEach(r=>{
+    if(r.sid) clearTimeout(r.sid);
+    if(r.tid) clearTimeout(r.tid);
+    if(r.ro){r.ro.style.animation='none';}
+  });
+  activeRings={};
+  DIRS.forEach(c=>{
+    const cell=document.getElementById('cell-'+c.id);
+    if(cell){cell.classList.remove('armed','hit-flash');}
+    const ro=document.getElementById('ro-'+c.id);
+    if(ro){ro.style.animation='none';}
+  });
+}
+
+// ── PROGRESS BAR ──
+function updateProg(t){
+  const pct=audioDur?(t/audioDur)*100:0;
+  document.getElementById('progFill').style.width=pct+'%';
+  document.getElementById('progHead').style.left=pct+'%';
+  document.getElementById('progTime').textContent=fmt(t)+' / '+fmt(audioDur);
+}
+
+document.getElementById('progWrap').addEventListener('click',function(e){
+  if(!audio||!audioDur) return;
+  const r=this.getBoundingClientRect();
+  const pct=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
+  audio.currentTime=pct*audioDur;
+  // reset beat scheduling
+  clearAllRings(); nextBeatIdx=0;
+  if(!audio.paused) startLoop();
+  updateProg(audio.currentTime);
+});
+
+function renderBeatTicks(){
+  const wrap=document.getElementById('progWrap');
+  wrap.querySelectorAll('.beat-tick').forEach(t=>t.remove());
+  if(!audioDur) return;
+  beats.forEach(b=>{
+    const tick=document.createElement('div');
+    tick.className='beat-tick';
+    tick.style.left=((b.time/audioDur)*100)+'%';
+    tick.style.background=BOX_COLORS[b.box]||'#fff';
+    wrap.appendChild(tick);
+  });
+}
+
+function fmt(s){
+  if(!isFinite(s)) return '0:00';
+  return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+}
+
+function setStatus(html){
+  document.getElementById('status').innerHTML=html;
+}
+</script>
+</body>
+</html>
