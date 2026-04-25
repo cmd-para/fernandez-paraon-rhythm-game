@@ -26,6 +26,7 @@ body{
 }
 .file-group { display: flex; flex-direction: column; gap: 5px; }
 .file-group label { font-size: 9px; color: var(--muted); text-transform: uppercase; }
+.file-group .file-name { font-size: 9px; color: var(--accent); min-height: 12px; }
 input[type="file"] { font-size: 10px; color: var(--accent); }
 
 /* ── UI ── */
@@ -44,9 +45,11 @@ input[type="file"] { font-size: 10px; color: var(--accent); }
   width:var(--cell); height:var(--cell); background:rgba(15, 15, 26, 0.95);
   border:2px solid var(--border); border-radius:15px;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
+  position: relative; overflow: hidden;
 }
 .cell.pressed { background: #1a1a2e; border-color: var(--accent); transform: scale(0.92); }
 .cell-key { font-size:20px; color:var(--accent); font-weight: 900; }
+.cell img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; border-radius: 13px; pointer-events: none; }
 
 /* ── NOTES ── */
 .note {
@@ -56,10 +59,19 @@ input[type="file"] { font-size: 10px; color: var(--accent); }
 }
 .note.missed { background: var(--miss) !important; opacity: 0; transform: scale(0.2) !important; }
 
+.status-bar {
+  font-size: 10px; color: var(--muted); letter-spacing: 0.1em;
+  min-height: 14px; text-align: center;
+}
+.status-bar span { color: var(--accent); }
+.status-bar span.err { color: var(--miss); }
+
 .btn {
   padding: 12px 24px; background: var(--panel); border: 1px solid var(--border);
   color: var(--text); cursor: pointer; font-family: 'Orbitron'; font-size: 11px;
+  border-radius: 6px; transition: border-color 0.15s, background 0.15s;
 }
+.btn:hover:not(:disabled) { border-color: var(--accent); background: #1a1a28; }
 .btn:disabled { opacity: 0.3; cursor: not-allowed; }
 </style>
 </head>
@@ -68,11 +80,13 @@ input[type="file"] { font-size: 10px; color: var(--accent); }
 <div class="import-zone">
     <div class="file-group">
         <label>1. Audio (MP3)</label>
-        <input type="file" id="audioInput" accept="audio/mp3">
+        <input type="file" id="audioInput" accept="audio/*">
+        <span class="file-name" id="audioName">—</span>
     </div>
     <div class="file-group">
         <label>2. Chart (JSON)</label>
         <input type="file" id="chartInput" accept=".json">
+        <span class="file-name" id="chartName">—</span>
     </div>
 </div>
 
@@ -87,6 +101,8 @@ input[type="file"] { font-size: 10px; color: var(--accent); }
     <div class="grid" id="grid"></div>
 </div>
 
+<div class="status-bar" id="statusBar">load an mp3 and a json chart to begin</div>
+
 <button class="btn" id="btnPlay" onclick="togglePlay()" disabled>WAITING FOR FILES...</button>
 
 <audio id="gameAudio"></audio>
@@ -99,96 +115,142 @@ const CELLS = [
     {id:'bl', k:'Z'}, {id:'bc', k:'X'}, {id:'br', k:'C'}
 ];
 
-// STATE
+// ── STATE ──
 let approachTime = 2.5;
 const OFFSET = 800;
 let beats = [];
 let activeNotes = [];
 let score = 0;
 let isPlaying = false;
+let audioReady = false;
+let chartReady = false;
 
 const audioPlayer = document.getElementById('gameAudio');
-const btnPlay = document.getElementById('btnPlay');
+const btnPlay     = document.getElementById('btnPlay');
+const statusBar   = document.getElementById('statusBar');
 
-// Init Grid
+// ── Init Grid ──
 const gridEl = document.getElementById('grid');
 CELLS.forEach(c => {
     const cell = document.createElement('div');
     cell.className = 'cell' + (c.id === 'center' ? ' shooter' : '');
     cell.id = `cell-${c.id}`;
-    if(c.id !== 'center') cell.innerHTML = `<span class="cell-key">${c.k}</span>`;
+    if (c.id !== 'center') cell.innerHTML = `<span class="cell-key">${c.k}</span>`;
     gridEl.appendChild(cell);
 });
 
-// File Handling
+// ── File Handling ──
 document.getElementById('audioInput').onchange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-        audioPlayer.src = URL.createObjectURL(file);
-        checkReady();
-    }
+    if (!file) return;
+    audioPlayer.src = URL.createObjectURL(file);
+    document.getElementById('audioName').textContent = file.name;
+    audioReady = true;
+    checkReady();
 };
 
 document.getElementById('chartInput').onchange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        try {
             const data = JSON.parse(event.target.result);
-            // Map YOUR JSON format (RECORDED_BEATS) to game logic
-            beats = data.RECORDED_BEATS.map(b => ({
-                box: b.box,
-                time: b.time,
+
+            // Support both new format (recordedBeats) and old format (RECORDED_BEATS)
+            const rawBeats = data.recordedBeats || data.RECORDED_BEATS;
+
+            if (!rawBeats || !Array.isArray(rawBeats)) {
+                statusBar.innerHTML = '<span class="err">JSON error: no recordedBeats array found</span>';
+                return;
+            }
+
+            beats = rawBeats.map(b => ({
+                box:     b.box,
+                time:    b.time,
                 spawned: false,
-                hit: false
+                hit:     false
             }));
+
+            document.getElementById('chartName').textContent = file.name + ' (' + beats.length + ' beats)';
+            chartReady = true;
             checkReady();
-        };
-        reader.readAsText(file);
-    }
+        } catch (err) {
+            statusBar.innerHTML = '<span class="err">JSON parse error: ' + err.message + '</span>';
+        }
+    };
+    reader.readAsText(file);
 };
 
 function checkReady() {
-    if (audioPlayer.src && beats.length > 0) {
+    if (audioReady && chartReady) {
         btnPlay.disabled = false;
-        btnPlay.textContent = "START GAME";
+        btnPlay.textContent = 'START GAME';
+        statusBar.innerHTML = 'ready — <span>' + beats.length + ' beats</span> loaded';
+    } else if (audioReady) {
+        statusBar.innerHTML = 'audio loaded — <span>waiting for chart json</span>';
+    } else if (chartReady) {
+        statusBar.innerHTML = 'chart loaded — <span>waiting for audio</span>';
     }
 }
 
-// Speed Control
+// ── Speed Control ──
 document.getElementById('speedSlider').oninput = (e) => {
     approachTime = parseFloat(e.target.value);
     document.getElementById('speedLabel').textContent = `NOTE LEAD TIME: ${approachTime.toFixed(1)}s`;
 };
 
-// Controls
+// ── Controls ──
 window.addEventListener('keydown', e => {
+    if (e.repeat) return;
     const cid = KEY_MAP[e.key.toLowerCase()];
-    if(cid) { document.getElementById(`cell-${cid}`).classList.add('pressed'); checkHit(cid); }
+    if (cid) { document.getElementById(`cell-${cid}`).classList.add('pressed'); checkHit(cid); }
 });
 window.addEventListener('keyup', e => {
     const cid = KEY_MAP[e.key.toLowerCase()];
-    if(cid) document.getElementById(`cell-${cid}`).classList.remove('pressed');
+    if (cid) document.getElementById(`cell-${cid}`).classList.remove('pressed');
 });
 
 function togglePlay() {
     if (!isPlaying) {
+        // Reset on fresh start (audio at beginning)
+        if (audioPlayer.currentTime === 0 || audioPlayer.ended) {
+            beats.forEach(b => { b.spawned = false; b.hit = false; });
+            activeNotes.forEach(n => n.el.remove());
+            activeNotes = [];
+            score = 0;
+            document.getElementById('score').textContent = '000000';
+        }
         audioPlayer.play();
         isPlaying = true;
-        btnPlay.textContent = "PAUSE";
+        btnPlay.textContent = 'PAUSE';
+        statusBar.innerHTML = '<span>playing</span>';
         gameLoop();
     } else {
         audioPlayer.pause();
         isPlaying = false;
-        btnPlay.textContent = "RESUME";
+        btnPlay.textContent = 'RESUME';
+        statusBar.innerHTML = 'paused';
     }
 }
 
+audioPlayer.addEventListener('ended', () => {
+    isPlaying = false;
+    btnPlay.textContent = 'RESTART';
+    statusBar.innerHTML = 'finished — score: <span>' + score + '</span>';
+    // reset for replay
+    audioPlayer.currentTime = 0;
+    beats.forEach(b => { b.spawned = false; b.hit = false; });
+    activeNotes.forEach(n => n.el.remove());
+    activeNotes = [];
+});
+
 function gameLoop() {
-    if(!isPlaying) return;
-    
+    if (!isPlaying) return;
+
     const now = audioPlayer.currentTime;
 
+    // Spawn notes
     beats.forEach(b => {
         if (!b.spawned && b.time - approachTime <= now) {
             const el = document.createElement('div');
@@ -216,38 +278,44 @@ function updateNotes(now) {
         }
 
         const target = document.getElementById(`cell-${n.box}`);
-        const rect = target.getBoundingClientRect();
+        if (!target) { activeNotes.splice(i, 1); continue; }
+
+        const rect     = target.getBoundingClientRect();
         const areaRect = document.getElementById('gameArea').getBoundingClientRect();
-        
-        const tx = rect.left - areaRect.left + (rect.width/2) - 22;
-        const ty = rect.top - areaRect.top + (rect.height/2) - 22;
+
+        const tx = rect.left - areaRect.left + (rect.width  / 2) - 22;
+        const ty = rect.top  - areaRect.top  + (rect.height / 2) - 22;
 
         let sx = tx, sy = ty;
-        if(n.box.includes('t')) sy -= OFFSET;
-        if(n.box.includes('b')) sy += OFFSET;
-        if(n.box.includes('l')) sx -= OFFSET;
-        if(n.box.includes('r')) sx += OFFSET;
+        if (n.box.includes('t')) sy -= OFFSET;
+        if (n.box.includes('b')) sy += OFFSET;
+        if (n.box.includes('l')) sx -= OFFSET;
+        if (n.box.includes('r')) sx += OFFSET;
+        // corner diagonals already get both offsets from the two checks above
 
-        n.el.style.left = (sx + (tx - sx) * Math.max(0, progress)) + 'px';
-        n.el.style.top = (sy + (ty - sy) * Math.max(0, progress)) + 'px';
-        n.el.style.transform = `scale(${0.5 + (Math.min(progress, 1) * 0.5)})`;
+        const p = Math.max(0, progress);
+        n.el.style.left      = (sx + (tx - sx) * p) + 'px';
+        n.el.style.top       = (sy + (ty - sy) * p) + 'px';
+        n.el.style.transform = `scale(${0.5 + Math.min(p, 1) * 0.5})`;
     }
 }
 
 function checkHit(cid) {
+    if (!isPlaying) return;
     const now = audioPlayer.currentTime;
-    const idx = activeNotes.findLastIndex(n => n.box === cid && Math.abs(n.time - now) < 0.2);
+    const idx = activeNotes.findLastIndex(n => n.box === cid && Math.abs(n.time - now) < 0.25);
 
-    if(idx !== -1) {
+    if (idx !== -1) {
         const n = activeNotes[idx];
         score += 100;
         document.getElementById('score').textContent = score.toString().padStart(6, '0');
         n.el.remove();
         activeNotes.splice(idx, 1);
-        
+
         const cell = document.getElementById(`cell-${cid}`);
-        cell.style.borderColor = "var(--hit)";
-        setTimeout(() => cell.style.borderColor = "", 100);
+        cell.style.borderColor = 'var(--hit)';
+        cell.style.boxShadow   = '0 0 12px var(--hit)';
+        setTimeout(() => { cell.style.borderColor = ''; cell.style.boxShadow = ''; }, 150);
     }
 }
 </script>
