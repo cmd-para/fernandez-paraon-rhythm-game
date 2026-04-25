@@ -110,6 +110,7 @@
   .status span { color: var(--accent); }
   .status span.rec { color: var(--accent3); }
   .export-box { width: 100%; max-width: 560px; background: #0d0d18; border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; font-size: 11px; line-height: 1.8; color: #7070a0; white-space: pre; overflow-x: auto; display: none; }
+  .export-actions { display: none; gap: 8px; justify-content: center; max-width: 560px; width: 100%; }
   input[type=file] { display: none; }
   .color-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
 </style>
@@ -137,7 +138,6 @@
   </div>
   <div class="audio-body">
     <div class="audio-upload-row">
-      <!-- label directly targets the input — no JS click() needed, browser always allows this -->
       <label for="mp3Input" class="ctrl-btn">+ load mp3</label>
       <div class="audio-filename" id="audioFilename">no file loaded</div>
     </div>
@@ -177,6 +177,10 @@
 </div>
 
 <button class="btn" onclick="toggleExport()" style="align-self:center;">export config &#8595;</button>
+<div class="export-actions" id="exportActions">
+  <button class="btn primary" onclick="downloadJSON()">&#8659; download .json</button>
+  <button class="btn" onclick="copyJSON()">&#9635; copy to clipboard</button>
+</div>
 <pre class="export-box" id="exportBox"></pre>
 
 <script>
@@ -204,11 +208,12 @@ DIRS.forEach(c => { boxState[c.id] = {imageSrc:null,imageName:null,spawnTime:0};
 
 let recordedBeats = [];
 let activeId      = null;
-let pendingImg    = null;   // tracks which slot an image upload is for
+let pendingImg    = null;
 let audio         = null;
 let audioDur      = 0;
 let isRecording   = false;
 let rafId         = null;
+let lastJsonStr   = '';
 const shooterImages = {...SHOOTER_IMAGES};
 
 // DOM refs
@@ -311,7 +316,7 @@ mp3Input.addEventListener('change', function() {
     renderBeatMarkers();
   });
 
-  audio.addEventListener('error', function(e) {
+  audio.addEventListener('error', function() {
     statusEl.innerHTML = '<span style="color:var(--accent3)">could not load this file (code '+
       (audio.error ? audio.error.code : '?')+')</span>';
   });
@@ -321,7 +326,6 @@ mp3Input.addEventListener('change', function() {
     updatePlayBtn(); cancelAnimationFrame(rafId);
   });
 
-  // assign src AFTER attaching listeners
   audio.src = URL.createObjectURL(file);
   audio.load();
 });
@@ -557,16 +561,57 @@ document.addEventListener('keydown', e => {
   if (isRecording && audio && !audio.paused && km[e.code]) { e.preventDefault(); captureBeat(km[e.code]); }
 });
 
-// ── Export ── //
+// ── Export (pure valid JSON) ──
+function buildConfig() {
+  const spawnTiming = {};
+  DIRS.forEach(c => {
+    spawnTiming[c.id] = {
+      label: c.label,
+      spawnTime: parseFloat(boxState[c.id].spawnTime.toFixed(3)),
+      image: boxState[c.id].imageName || null
+    };
+  });
+  return {
+    spawnTiming,
+    recordedBeats: recordedBeats.map((b, i) => ({
+      index: i + 1,
+      box: b.id,
+      label: CELLS.find(x => x.id === b.id).label,
+      time: parseFloat(b.time.toFixed(3))
+    }))
+  };
+}
+
 function toggleExport() {
-  const box = document.getElementById('exportBox');
-  if (box.style.display==='block') { box.style.display='none'; return; }
-  const config = { spawnTiming:{}, recordedBeats: recordedBeats.map((b,i)=>({
-    index:i+1, box:b.id, label:CELLS.find(x=>x.id===b.id).label, time:parseFloat(b.time.toFixed(3))
-  }))};
-  DIRS.forEach(c => { config.spawnTiming[c.id] = {label:c.label, spawnTime:parseFloat(boxState[c.id].spawnTime.toFixed(1)), image:boxState[c.id].imageName||'(not set)'}; });
-  box.textContent = '// Spawn timing (sliders):\nconst SPAWN_TIMING = '+JSON.stringify(config.spawnTiming,null,2)+';\n\n// Recorded beats:\nconst RECORDED_BEATS = '+JSON.stringify(config.recordedBeats,null,2)+';';
+  const box     = document.getElementById('exportBox');
+  const actions = document.getElementById('exportActions');
+  if (box.style.display === 'block') {
+    box.style.display = 'none';
+    actions.style.display = 'none';
+    return;
+  }
+  lastJsonStr = JSON.stringify(buildConfig(), null, 2);
+  box.textContent = lastJsonStr;
   box.style.display = 'block';
+  actions.style.display = 'flex';
+}
+
+function downloadJSON() {
+  const blob = new Blob([lastJsonStr || JSON.stringify(buildConfig(), null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'rhythm_config.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function copyJSON() {
+  const str = lastJsonStr || JSON.stringify(buildConfig(), null, 2);
+  navigator.clipboard.writeText(str).then(() => {
+    statusEl.innerHTML = 'config <span>copied to clipboard</span>';
+  }).catch(() => {
+    statusEl.innerHTML = '<span style="color:var(--accent3)">clipboard copy failed</span>';
+  });
 }
 </script>
 </body>
