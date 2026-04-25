@@ -73,6 +73,32 @@ input[type="file"] { font-size: 10px; color: var(--accent); }
 }
 .btn:hover:not(:disabled) { border-color: var(--accent); background: #1a1a28; }
 .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn.danger { border-color: var(--miss); color: var(--miss); }
+.btn.danger:hover:not(:disabled) { background: rgba(255,85,85,0.1); border-color: var(--miss); }
+
+.btn-row { display: flex; gap: 10px; align-items: center; }
+
+/* ── CONFIRM OVERLAY ── */
+.confirm-overlay {
+  display: none; position: fixed; inset: 0; z-index: 100;
+  background: rgba(8,8,15,0.85); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center;
+}
+.confirm-overlay.visible { display: flex; }
+.confirm-box {
+  background: var(--panel); border: 1px solid var(--miss);
+  border-radius: 12px; padding: 32px 40px;
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+  box-shadow: 0 0 40px rgba(255,85,85,0.2);
+}
+.confirm-box .confirm-title {
+  font-family: 'Orbitron', sans-serif; font-size: 13px;
+  letter-spacing: 0.2em; color: var(--miss); text-transform: uppercase;
+}
+.confirm-box .confirm-sub {
+  font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-align: center;
+}
+.confirm-actions { display: flex; gap: 12px; }
 </style>
 </head>
 <body>
@@ -103,7 +129,22 @@ input[type="file"] { font-size: 10px; color: var(--accent); }
 
 <div class="status-bar" id="statusBar">load an mp3 and a json chart to begin</div>
 
-<button class="btn" id="btnPlay" onclick="togglePlay()" disabled>WAITING FOR FILES...</button>
+<div class="btn-row">
+  <button class="btn" id="btnPlay" onclick="togglePlay()" disabled>WAITING FOR FILES...</button>
+  <button class="btn danger" id="btnRestart" onclick="askRestart()" disabled>&#8635; RESTART</button>
+</div>
+
+<!-- Confirm overlay -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-title">&#9888; Restart?</div>
+    <div class="confirm-sub">your current score will be lost.<br>this cannot be undone.</div>
+    <div class="confirm-actions">
+      <button class="btn danger" onclick="confirmRestart()">YES, RESTART</button>
+      <button class="btn" onclick="cancelRestart()">CANCEL</button>
+    </div>
+  </div>
+</div>
 
 <audio id="gameAudio"></audio>
 
@@ -125,9 +166,11 @@ let isPlaying = false;
 let audioReady = false;
 let chartReady = false;
 
-const audioPlayer = document.getElementById('gameAudio');
-const btnPlay     = document.getElementById('btnPlay');
-const statusBar   = document.getElementById('statusBar');
+const audioPlayer    = document.getElementById('gameAudio');
+const btnPlay        = document.getElementById('btnPlay');
+const btnRestart     = document.getElementById('btnRestart');
+const statusBar      = document.getElementById('statusBar');
+const confirmOverlay = document.getElementById('confirmOverlay');
 
 // ── Init Grid ──
 const gridEl = document.getElementById('grid');
@@ -186,6 +229,7 @@ function checkReady() {
     if (audioReady && chartReady) {
         btnPlay.disabled = false;
         btnPlay.textContent = 'START GAME';
+        btnRestart.disabled = false;
         statusBar.innerHTML = 'ready — <span>' + beats.length + ' beats</span> loaded';
     } else if (audioReady) {
         statusBar.innerHTML = 'audio loaded — <span>waiting for chart json</span>';
@@ -318,6 +362,41 @@ function checkHit(cid) {
         setTimeout(() => { cell.style.borderColor = ''; cell.style.boxShadow = ''; }, 150);
     }
 }
+
+// ── Restart ──
+function askRestart() {
+    // Pause if playing
+    if (isPlaying) {
+        audioPlayer.pause();
+        isPlaying = false;
+        btnPlay.textContent = 'RESUME';
+    }
+    confirmOverlay.classList.add('visible');
+}
+
+function cancelRestart() {
+    confirmOverlay.classList.remove('visible');
+}
+
+function confirmRestart() {
+    confirmOverlay.classList.remove('visible');
+    // Full reset
+    audioPlayer.pause();
+    audioPlayer.currentTime = 0;
+    isPlaying = false;
+    score = 0;
+    document.getElementById('score').textContent = '000000';
+    beats.forEach(b => { b.spawned = false; b.hit = false; });
+    activeNotes.forEach(n => n.el.remove());
+    activeNotes = [];
+    btnPlay.textContent = 'START GAME';
+    statusBar.innerHTML = 'restarted — <span>' + beats.length + ' beats</span> loaded';
+}
+
+// Close overlay on backdrop click
+document.getElementById('confirmOverlay').addEventListener('click', function(e) {
+    if (e.target === this) cancelRestart();
+});
 </script>
 </body>
 </html>
