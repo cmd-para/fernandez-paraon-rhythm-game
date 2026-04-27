@@ -15,6 +15,9 @@
             --accent: #7c6fff;
             --miss: #ff5555;
             --hit: #50fa7b;
+            --hit300: #50fa7b;
+            --hit100: #f1fa8c;
+            --hit50: #ffb86c;
             --text: #e0deff;
             --muted: #3a3a55;
             --cell: 110px;
@@ -235,13 +238,26 @@
             pointer-events: none;
             z-index: 11;
             font-family: 'Orbitron', sans-serif;
-            font-size: 13px;
             font-weight: 900;
-            color: var(--hit);
             left: 50%;
             bottom: 50%;
             animation: pop-score 0.55s ease-out forwards;
             white-space: nowrap;
+        }
+
+        .pop-score.t300 {
+            color: var(--hit300);
+            font-size: 15px;
+        }
+
+        .pop-score.t100 {
+            color: var(--hit100);
+            font-size: 13px;
+        }
+
+        .pop-score.t50 {
+            color: var(--hit50);
+            font-size: 11px;
         }
 
         .status-bar {
@@ -567,22 +583,28 @@
             }
         }
 
+        // ── HIT TIERS ──
+        // Returns { points, tierClass, ringColor, particleColors }
+        function getTier(delta) {
+            if (delta <= 0.08) return { points: 300, tierClass: 't300', ringColor: '#50fa7b', particleColors: ['#50fa7b', '#b8ffcc', '#ffffff', '#50fa7b', '#b8ffcc', '#ffffff', '#50fa7b', '#b8ffcc'] };
+            if (delta <= 0.15) return { points: 100, tierClass: 't100', ringColor: '#f1fa8c', particleColors: ['#f1fa8c', '#fffab0', '#ffffff', '#f1fa8c', '#fffab0', '#ffffff', '#f1fa8c', '#fffab0'] };
+            return { points: 50, tierClass: 't50', ringColor: '#ffb86c', particleColors: ['#ffb86c', '#ffd4a8', '#ffffff', '#ffb86c', '#ffd4a8', '#ffffff', '#ffb86c', '#ffd4a8'] };
+        }
+
         // ── POP BURST FX ──
-        function spawnBurst(x, y) {
+        function spawnBurst(x, y, ringColor, particleColors) {
             const area = document.getElementById('gameArea');
 
-            // Two expanding rings
             for (let r = 0; r < 2; r++) {
                 const ring = document.createElement('div');
                 ring.className = 'pop-ring' + (r === 1 ? ' ring2' : '');
                 ring.style.left = x + 'px';
                 ring.style.top = y + 'px';
+                ring.style.borderColor = ringColor;
                 area.appendChild(ring);
                 setTimeout(() => ring.remove(), 550);
             }
 
-            // 8 particles flying outward
-            const colors = ['#7c6fff', '#50fa7b', '#ffffff', '#b0acff', '#50fa7b', '#7c6fff', '#ffffff', '#50fa7b'];
             for (let i = 0; i < 8; i++) {
                 const angle = (i / 8) * Math.PI * 2;
                 const dist = 28 + Math.random() * 20;
@@ -593,7 +615,7 @@
                 p.className = 'pop-particle';
                 p.style.left = x + 'px';
                 p.style.top = y + 'px';
-                p.style.background = colors[i];
+                p.style.background = particleColors[i];
                 p.style.setProperty('--dx0', '0px');
                 p.style.setProperty('--dy0', '0px');
                 p.style.setProperty('--dx1', dx1 + 'px');
@@ -603,10 +625,10 @@
             }
         }
 
-        function spawnScorePopup(x, y, points) {
+        function spawnScorePopup(x, y, points, tierClass) {
             const area = document.getElementById('gameArea');
             const el = document.createElement('div');
-            el.className = 'pop-score';
+            el.className = 'pop-score ' + tierClass;
             el.textContent = '+' + points;
             el.style.left = x + 'px';
             el.style.top = y + 'px';
@@ -617,14 +639,17 @@
         function checkHit(cid) {
             if (!isPlaying) return;
             const now = audioPlayer.currentTime;
+            // Max window is 0.25s (50 tier cutoff)
             const idx = activeNotes.findLastIndex(n => n.box === cid && Math.abs(n.time - now) < 0.25);
 
             if (idx !== -1) {
                 const n = activeNotes[idx];
-                score += 100;
+                const delta = Math.abs(n.time - now);
+                const tier = getTier(delta);
+
+                score += tier.points;
                 document.getElementById('score').textContent = score.toString().padStart(6, '0');
 
-                // Get note position for burst origin
                 const noteRect = n.el.getBoundingClientRect();
                 const areaRect = document.getElementById('gameArea').getBoundingClientRect();
                 const bx = noteRect.left - areaRect.left + noteRect.width / 2;
@@ -633,12 +658,12 @@
                 n.el.remove();
                 activeNotes.splice(idx, 1);
 
-                spawnBurst(bx, by);
-                spawnScorePopup(bx, by, 100);
+                spawnBurst(bx, by, tier.ringColor, tier.particleColors);
+                spawnScorePopup(bx, by, tier.points, tier.tierClass);
 
                 const cell = document.getElementById(`cell-${cid}`);
-                cell.style.borderColor = 'var(--hit)';
-                cell.style.boxShadow = '0 0 12px var(--hit)';
+                cell.style.borderColor = tier.ringColor;
+                cell.style.boxShadow = `0 0 12px ${tier.ringColor}`;
                 setTimeout(() => { cell.style.borderColor = ''; cell.style.boxShadow = ''; }, 150);
             }
         }
