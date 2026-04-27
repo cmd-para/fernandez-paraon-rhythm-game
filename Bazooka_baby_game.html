@@ -120,6 +120,13 @@
             overflow: hidden;
         }
 
+        /* center placeholder — invisible, just holds grid layout */
+        .cell.center-placeholder {
+            background: transparent;
+            border-color: transparent;
+            pointer-events: none;
+        }
+
         .cell.pressed {
             background: #1a1a2e;
             border-color: var(--accent);
@@ -160,46 +167,20 @@
             transform: scale(0.2) !important;
         }
 
-        /* ── POP BURST ── */
         @keyframes pop-ring {
-            0% {
-                transform: translate(-50%, -50%) scale(0.4);
-                opacity: 1;
-            }
-
-            100% {
-                transform: translate(-50%, -50%) scale(2.2);
-                opacity: 0;
-            }
+            0% { transform: translate(-50%, -50%) scale(0.4); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
         }
 
         @keyframes pop-particle {
-            0% {
-                opacity: 1;
-                transform: translate(var(--dx0), var(--dy0)) scale(1);
-            }
-
-            100% {
-                opacity: 0;
-                transform: translate(var(--dx1), var(--dy1)) scale(0);
-            }
+            0% { opacity: 1; transform: translate(var(--dx0), var(--dy0)) scale(1); }
+            100% { opacity: 0; transform: translate(var(--dx1), var(--dy1)) scale(0); }
         }
 
         @keyframes pop-score {
-            0% {
-                opacity: 1;
-                transform: translate(-50%, 0) scale(1);
-            }
-
-            60% {
-                opacity: 1;
-                transform: translate(-50%, -22px) scale(1.2);
-            }
-
-            100% {
-                opacity: 0;
-                transform: translate(-50%, -38px) scale(0.9);
-            }
+            0% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+            60% { opacity: 1; transform: translate(-50%, -22px) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -38px) scale(0.9); }
         }
 
         .pop-ring {
@@ -245,20 +226,9 @@
             white-space: nowrap;
         }
 
-        .pop-score.t300 {
-            color: var(--hit300);
-            font-size: 15px;
-        }
-
-        .pop-score.t100 {
-            color: var(--hit100);
-            font-size: 13px;
-        }
-
-        .pop-score.t50 {
-            color: var(--hit50);
-            font-size: 11px;
-        }
+        .pop-score.t300 { color: var(--hit300); font-size: 15px; }
+        .pop-score.t100 { color: var(--hit100); font-size: 13px; }
+        .pop-score.t50  { color: var(--hit50);  font-size: 11px; }
 
         .status-bar {
             font-size: 10px;
@@ -268,13 +238,8 @@
             text-align: center;
         }
 
-        .status-bar span {
-            color: var(--accent);
-        }
-
-        .status-bar span.err {
-            color: var(--miss);
-        }
+        .status-bar span { color: var(--accent); }
+        .status-bar span.err { color: var(--miss); }
 
         .btn {
             padding: 12px 24px;
@@ -288,31 +253,13 @@
             transition: border-color 0.15s, background 0.15s;
         }
 
-        .btn:hover:not(:disabled) {
-            border-color: var(--accent);
-            background: #1a1a28;
-        }
+        .btn:hover:not(:disabled) { border-color: var(--accent); background: #1a1a28; }
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        .btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
+        .btn.danger { border-color: var(--miss); color: var(--miss); }
+        .btn.danger:hover:not(:disabled) { background: rgba(255, 85, 85, 0.1); border-color: var(--miss); }
 
-        .btn.danger {
-            border-color: var(--miss);
-            color: var(--miss);
-        }
-
-        .btn.danger:hover:not(:disabled) {
-            background: rgba(255, 85, 85, 0.1);
-            border-color: var(--miss);
-        }
-
-        .btn-row {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
+        .btn-row { display: flex; gap: 10px; align-items: center; }
 
         .confirm-overlay {
             display: none;
@@ -325,9 +272,7 @@
             justify-content: center;
         }
 
-        .confirm-overlay.visible {
-            display: flex;
-        }
+        .confirm-overlay.visible { display: flex; }
 
         .confirm-box {
             background: var(--panel);
@@ -356,10 +301,7 @@
             text-align: center;
         }
 
-        .confirm-actions {
-            display: flex;
-            gap: 12px;
-        }
+        .confirm-actions { display: flex; gap: 12px; }
     </style>
 </head>
 
@@ -411,9 +353,11 @@
 
     <script>
         const KEY_MAP = { 'q': 'tl', 'w': 'tc', 'e': 'tr', 'a': 'ml', 'd': 'mr', 'z': 'bl', 'x': 'bc', 'c': 'br' };
+
+        // Center cell is now a blank placeholder — no key, no id for hits
         const CELLS = [
             { id: 'tl', k: 'Q' }, { id: 'tc', k: 'W' }, { id: 'tr', k: 'E' },
-            { id: 'ml', k: 'A' }, { id: 'center', k: '' }, { id: 'mr', k: 'D' },
+            { id: 'ml', k: 'A' }, { id: 'center', k: null }, { id: 'mr', k: 'D' },
             { id: 'bl', k: 'Z' }, { id: 'bc', k: 'X' }, { id: 'br', k: 'C' }
         ];
 
@@ -435,9 +379,14 @@
         const gridEl = document.getElementById('grid');
         CELLS.forEach(c => {
             const cell = document.createElement('div');
-            cell.className = 'cell' + (c.id === 'center' ? ' shooter' : '');
-            cell.id = `cell-${c.id}`;
-            if (c.id !== 'center') cell.innerHTML = `<span class="cell-key">${c.k}</span>`;
+            if (c.id === 'center') {
+                // Invisible placeholder to keep grid layout intact
+                cell.className = 'cell center-placeholder';
+            } else {
+                cell.className = 'cell';
+                cell.id = `cell-${c.id}`;
+                cell.innerHTML = `<span class="cell-key">${c.k}</span>`;
+            }
             gridEl.appendChild(cell);
         });
 
@@ -583,18 +532,14 @@
             }
         }
 
-        // ── HIT TIERS ──
-        // Returns { points, tierClass, ringColor, particleColors }
         function getTier(delta) {
             if (delta <= 0.08) return { points: 300, tierClass: 't300', ringColor: '#50fa7b', particleColors: ['#50fa7b', '#b8ffcc', '#ffffff', '#50fa7b', '#b8ffcc', '#ffffff', '#50fa7b', '#b8ffcc'] };
             if (delta <= 0.15) return { points: 100, tierClass: 't100', ringColor: '#f1fa8c', particleColors: ['#f1fa8c', '#fffab0', '#ffffff', '#f1fa8c', '#fffab0', '#ffffff', '#f1fa8c', '#fffab0'] };
             return { points: 50, tierClass: 't50', ringColor: '#ffb86c', particleColors: ['#ffb86c', '#ffd4a8', '#ffffff', '#ffb86c', '#ffd4a8', '#ffffff', '#ffb86c', '#ffd4a8'] };
         }
 
-        // ── POP BURST FX ──
         function spawnBurst(x, y, ringColor, particleColors) {
             const area = document.getElementById('gameArea');
-
             for (let r = 0; r < 2; r++) {
                 const ring = document.createElement('div');
                 ring.className = 'pop-ring' + (r === 1 ? ' ring2' : '');
@@ -604,13 +549,9 @@
                 area.appendChild(ring);
                 setTimeout(() => ring.remove(), 550);
             }
-
             for (let i = 0; i < 8; i++) {
                 const angle = (i / 8) * Math.PI * 2;
                 const dist = 28 + Math.random() * 20;
-                const dx1 = Math.cos(angle) * dist;
-                const dy1 = Math.sin(angle) * dist;
-
                 const p = document.createElement('div');
                 p.className = 'pop-particle';
                 p.style.left = x + 'px';
@@ -618,8 +559,8 @@
                 p.style.background = particleColors[i];
                 p.style.setProperty('--dx0', '0px');
                 p.style.setProperty('--dy0', '0px');
-                p.style.setProperty('--dx1', dx1 + 'px');
-                p.style.setProperty('--dy1', dy1 + 'px');
+                p.style.setProperty('--dx1', (Math.cos(angle) * dist) + 'px');
+                p.style.setProperty('--dy1', (Math.sin(angle) * dist) + 'px');
                 area.appendChild(p);
                 setTimeout(() => p.remove(), 500);
             }
@@ -639,33 +580,38 @@
         function checkHit(cid) {
             if (!isPlaying) return;
             const now = audioPlayer.currentTime;
-            // Max window is 0.25s (50 tier cutoff)
-            const idx = activeNotes.findLastIndex(n => n.box === cid && Math.abs(n.time - now) < 0.25);
 
-            if (idx !== -1) {
-                const n = activeNotes[idx];
-                const delta = Math.abs(n.time - now);
-                const tier = getTier(delta);
+            // Collect all active notes in this cell within the hit window
+            const candidates = activeNotes
+                .map((n, i) => ({ n, i, delta: Math.abs(n.time - now) }))
+                .filter(({ n, delta }) => n.box === cid && delta < 0.25);
 
-                score += tier.points;
-                document.getElementById('score').textContent = score.toString().padStart(6, '0');
+            // Only register the FIRST (earliest/closest upcoming) note — sort by note.time ascending
+            if (candidates.length === 0) return;
+            candidates.sort((a, b) => a.n.time - b.n.time);
+            const { n, i: idx } = candidates[0];
 
-                const noteRect = n.el.getBoundingClientRect();
-                const areaRect = document.getElementById('gameArea').getBoundingClientRect();
-                const bx = noteRect.left - areaRect.left + noteRect.width / 2;
-                const by = noteRect.top - areaRect.top + noteRect.height / 2;
+            const delta = Math.abs(n.time - now);
+            const tier = getTier(delta);
 
-                n.el.remove();
-                activeNotes.splice(idx, 1);
+            score += tier.points;
+            document.getElementById('score').textContent = score.toString().padStart(6, '0');
 
-                spawnBurst(bx, by, tier.ringColor, tier.particleColors);
-                spawnScorePopup(bx, by, tier.points, tier.tierClass);
+            const noteRect = n.el.getBoundingClientRect();
+            const areaRect = document.getElementById('gameArea').getBoundingClientRect();
+            const bx = noteRect.left - areaRect.left + noteRect.width / 2;
+            const by = noteRect.top - areaRect.top + noteRect.height / 2;
 
-                const cell = document.getElementById(`cell-${cid}`);
-                cell.style.borderColor = tier.ringColor;
-                cell.style.boxShadow = `0 0 12px ${tier.ringColor}`;
-                setTimeout(() => { cell.style.borderColor = ''; cell.style.boxShadow = ''; }, 150);
-            }
+            n.el.remove();
+            activeNotes.splice(idx, 1);
+
+            spawnBurst(bx, by, tier.ringColor, tier.particleColors);
+            spawnScorePopup(bx, by, tier.points, tier.tierClass);
+
+            const cell = document.getElementById(`cell-${cid}`);
+            cell.style.borderColor = tier.ringColor;
+            cell.style.boxShadow = `0 0 12px ${tier.ringColor}`;
+            setTimeout(() => { cell.style.borderColor = ''; cell.style.boxShadow = ''; }, 150);
         }
 
         function askRestart() {
