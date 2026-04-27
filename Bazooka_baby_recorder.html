@@ -35,8 +35,38 @@
   .cell-label svg { opacity: 0.3; }
   .cell.center { cursor: default; border-color: #2e2e44; background: #0c0c16; }
   .cell.center:hover { transform: none; border-color: #2e2e44; }
+ 
+  /* Key hint badge on each cell */
+  .key-hint {
+    position: absolute;
+    top: 6px; left: 7px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px; font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    z-index: 2;
+    pointer-events: none;
+    background: rgba(10,10,15,0.65);
+    border: 1px solid #2a2a3a;
+    border-radius: 4px;
+    padding: 2px 5px;
+    transition: color 0.12s, border-color 0.12s, background 0.12s;
+  }
+  /* When recording is active, highlight the key hint */
+  body.recording .cell:not(.center) .key-hint {
+    color: var(--accent);
+    border-color: rgba(124,111,255,0.5);
+    background: rgba(124,111,255,0.1);
+  }
+  /* Key press visual pop */
+  .cell.key-press .key-hint {
+    color: #fff !important;
+    border-color: var(--accent3) !important;
+    background: rgba(255,68,68,0.25) !important;
+  }
+ 
   #aimCanvas { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
-
+ 
   /* AUDIO */
   .audio-panel { width: 100%; max-width: 560px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
   .audio-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-bottom: 1px solid var(--border); font-size: 11px; letter-spacing: 0.15em; color: var(--muted); }
@@ -50,7 +80,7 @@
   .beat-marker { position: absolute; top: 0; width: 2px; height: 100%; opacity: 0.7; pointer-events: none; }
   .progress-time { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 10px; color: var(--muted); pointer-events: none; letter-spacing: 0.08em; }
   .audio-controls { display: flex; align-items: center; gap: 8px; }
-
+ 
   /* BUTTONS */
   .ctrl-btn, label.ctrl-btn {
     font-family: 'Share Tech Mono', monospace; font-size: 11px; letter-spacing: 0.08em;
@@ -65,7 +95,7 @@
   .ctrl-btn.danger:hover { background: rgba(255,68,68,0.1); }
   .ctrl-btn.recording { border-color: var(--accent3); color: var(--accent3); animation: pulse 0.8s ease-in-out infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-
+ 
   /* TIMING */
   .timing-panel { width: 100%; max-width: 560px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
   .timing-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-bottom: 1px solid var(--border); font-size: 11px; letter-spacing: 0.15em; color: var(--muted); }
@@ -86,7 +116,7 @@
   .upload-btn { font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 0.08em; padding: 5px 10px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 5px; cursor: pointer; transition: border-color 0.15s, color 0.15s; white-space: nowrap; }
   .upload-btn:hover { border-color: var(--accent2); color: var(--accent2); }
   .upload-btn.has-image { border-color: #3a3050; color: var(--accent2); }
-
+ 
   /* BEATS */
   .beats-panel { width: 100%; max-width: 560px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: none; }
   .beats-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-bottom: 1px solid var(--border); font-size: 11px; letter-spacing: 0.15em; color: var(--muted); }
@@ -98,7 +128,40 @@
   .beat-entry .be-time { color: var(--text); min-width: 60px; }
   .beat-entry .be-del { margin-left: auto; cursor: pointer; color: var(--muted); font-size: 13px; padding: 0 4px; transition: color 0.1s; }
   .beat-entry .be-del:hover { color: var(--accent3); }
-
+ 
+  /* KEY LEGEND */
+  .key-legend {
+    width: 100%; max-width: 560px;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+  }
+  .key-legend-header {
+    padding: 10px 18px; border-bottom: 1px solid var(--border);
+    font-size: 11px; letter-spacing: 0.15em; color: var(--muted);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .key-legend-body {
+    padding: 14px 18px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px 10px;
+    font-size: 10px;
+  }
+  .key-legend-item {
+    display: flex; align-items: center; gap: 7px; color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+  .key-badge {
+    font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 700;
+    background: #0d0d18; border: 1px solid var(--border);
+    border-radius: 4px; padding: 3px 7px;
+    color: var(--accent); min-width: 28px; text-align: center;
+    flex-shrink: 0;
+  }
+  .key-legend-item .dot {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  }
+ 
   /* MISC */
   .shooter-toolbar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 560px; }
   .btn { font-family: 'Share Tech Mono', monospace; font-size: 11px; letter-spacing: 0.08em; padding: 7px 14px; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
@@ -116,20 +179,19 @@
 </style>
 </head>
 <body>
-
+ 
 <h1>Rhythm Game &mdash; Template</h1>
-
-<!-- HIDDEN FILE INPUTS — must be in DOM before any JS runs -->
+ 
 <input type="file" id="mp3Input" accept="audio/*">
 <input type="file" id="imgInput" accept="image/*">
-
+ 
 <div class="grid-wrap">
   <canvas id="aimCanvas"></canvas>
   <div class="grid" id="grid"></div>
 </div>
-
+ 
 <div class="status" id="status">load an mp3 to begin</div>
-
+ 
 <div class="section-label">Audio</div>
 <div class="audio-panel">
   <div class="audio-header">
@@ -154,18 +216,27 @@
     </div>
   </div>
 </div>
-
+ 
 <div class="beats-panel" id="beatsPanel">
   <div class="beats-header">
     <span>RECORDED BEATS &mdash; <span id="beatCount" style="color:var(--accent)">0</span> hits</span>
-    <span style="font-size:10px;">click boxes while recording</span>
+    <span style="font-size:10px;">press keys while recording</span>
   </div>
   <div class="beats-list" id="beatsList"></div>
 </div>
-
+ 
+<!-- Key legend -->
+<div class="key-legend">
+  <div class="key-legend-header">
+    <span>KEYBOARD MAP &mdash; BEAT INPUT</span>
+    <span style="font-size:10px; color:#333350;">active during recording</span>
+  </div>
+  <div class="key-legend-body" id="keyLegendBody"></div>
+</div>
+ 
 <div class="section-label">Shooter images</div>
 <div class="shooter-toolbar" id="shooterToolbar"></div>
-
+ 
 <div class="section-label">Enemy images &amp; spawn timing</div>
 <div class="timing-panel">
   <div class="timing-header">
@@ -175,14 +246,14 @@
   </div>
   <div class="timing-rows" id="timingRows"></div>
 </div>
-
+ 
 <button class="btn" onclick="toggleExport()" style="align-self:center;">export config &#8595;</button>
 <div class="export-actions" id="exportActions">
   <button class="btn primary" onclick="downloadJSON()">&#8659; download .json</button>
   <button class="btn" onclick="copyJSON()">&#9635; copy to clipboard</button>
 </div>
 <pre class="export-box" id="exportBox"></pre>
-
+ 
 <script>
 const SHOOTER_IMAGES = {
   idle:"images/shooter_idle.png",
@@ -190,7 +261,7 @@ const SHOOTER_IMAGES = {
   ml:"images/shooter_ml.png", mr:"images/shooter_mr.png",
   bl:"images/shooter_bl.png", bc:"images/shooter_bc.png", br:"images/shooter_br.png",
 };
-
+ 
 const CELLS = [
   {id:'tl',label:'TOP-LEFT'},{id:'tc',label:'TOP'},{id:'tr',label:'TOP-RIGHT'},
   {id:'ml',label:'LEFT'},{id:'center',label:'SHOOTER'},{id:'mr',label:'RIGHT'},
@@ -202,10 +273,23 @@ const BOX_COLORS = {
   ml:'#ffb86c',mr:'#ff5555',
   bl:'#50fa7b',bc:'#f1fa8c',br:'#8be9fd',
 };
-
+ 
+// ── Key mapping: QWEASDZXC layout ──
+const KEY_MAP = {
+  KeyQ:'tl', KeyW:'tc', KeyE:'tr',
+  KeyA:'ml',            KeyD:'mr',
+  KeyZ:'bl', KeyX:'bc', KeyC:'br',
+};
+// Display labels for the legend
+const KEY_DISPLAY = {
+  tl:'Q', tc:'W', tr:'E',
+  ml:'A',         mr:'D',
+  bl:'Z', bc:'X', br:'C',
+};
+ 
 const boxState = {};
 DIRS.forEach(c => { boxState[c.id] = {imageSrc:null,imageName:null,spawnTime:0}; });
-
+ 
 let recordedBeats = [];
 let activeId      = null;
 let pendingImg    = null;
@@ -215,7 +299,7 @@ let isRecording   = false;
 let rafId         = null;
 let lastJsonStr   = '';
 const shooterImages = {...SHOOTER_IMAGES};
-
+ 
 // DOM refs
 const statusEl    = document.getElementById('status');
 const mp3Input    = document.getElementById('mp3Input');
@@ -230,13 +314,23 @@ const beatsPanel  = document.getElementById('beatsPanel');
 const beatsList   = document.getElementById('beatsList');
 const beatCountEl = document.getElementById('beatCount');
 const audioHdrTime= document.getElementById('audioHeaderTime');
-
+ 
 // ── Build grid ──
 CELLS.forEach(c => {
   const cell = document.createElement('div');
   cell.className = 'cell' + (c.id === 'center' ? ' center' : '');
   cell.id = 'cell-' + c.id;
-  cell.innerHTML = `<div class="cell-label" id="label-${c.id}">
+ 
+  // Key hint badge (not on center)
+  if (c.id !== 'center') {
+    const hint = document.createElement('div');
+    hint.className = 'key-hint';
+    hint.id = 'keyhint-' + c.id;
+    hint.textContent = KEY_DISPLAY[c.id];
+    cell.appendChild(hint);
+  }
+ 
+  cell.innerHTML += `<div class="cell-label" id="label-${c.id}">
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
       <rect x="2.5" y="2.5" width="15" height="15" rx="2.5" stroke="currentColor" stroke-width="1.5"/>
       <line x1="10" y1="5.5" x2="10" y2="14.5" stroke="currentColor" stroke-width="1.2"/>
@@ -247,7 +341,20 @@ CELLS.forEach(c => {
   document.getElementById('grid').appendChild(cell);
 });
 setCenterImage('idle');
-
+ 
+// ── Key legend ──
+const legendBody = document.getElementById('keyLegendBody');
+DIRS.forEach(c => {
+  const item = document.createElement('div');
+  item.className = 'key-legend-item';
+  item.id = 'legend-' + c.id;
+  item.innerHTML = `
+    <span class="key-badge" id="kbadge-${c.id}">${KEY_DISPLAY[c.id]}</span>
+    <span class="dot" style="background:${BOX_COLORS[c.id]}"></span>
+    <span>${c.label}</span>`;
+  legendBody.appendChild(item);
+});
+ 
 // ── Shooter toolbar ──
 ['idle',...DIRS.map(d=>d.id)].forEach(key => {
   const lbl = key==='idle' ? 'idle' : DIRS.find(d=>d.id===key).label.toLowerCase();
@@ -257,7 +364,7 @@ setCenterImage('idle');
   btn.onclick = () => { pendingImg = 'shooter-'+key; imgInput.value=''; imgInput.click(); };
   document.getElementById('shooterToolbar').appendChild(btn);
 });
-
+ 
 // ── Timing rows ──
 DIRS.forEach(c => {
   const row = document.createElement('div');
@@ -274,35 +381,36 @@ DIRS.forEach(c => {
     <div class="timing-val" id="val-${c.id}">0.0s</div>
     <button class="upload-btn" id="ubtn-${c.id}">+ image</button>`;
   document.getElementById('timingRows').appendChild(row);
-
+ 
   document.getElementById('slider-'+c.id).addEventListener('input', e => {
     const v = parseFloat(e.target.value);
     boxState[c.id].spawnTime = v;
     document.getElementById('val-'+c.id).textContent = v.toFixed(1)+'s';
   });
-
+ 
   document.getElementById('ubtn-'+c.id).addEventListener('click', () => {
     pendingImg = 'enemy-'+c.id;
     imgInput.value = '';
     imgInput.click();
   });
 });
-
-// ── MP3 upload via label (no JS .click() needed) ──
+ 
+// ── MP3 upload ──
 mp3Input.addEventListener('change', function() {
   const file = this.files[0];
   if (!file) return;
-
+ 
   if (audio) { audio.pause(); audio = null; }
   cancelAnimationFrame(rafId);
   isRecording = false;
+  document.body.classList.remove('recording');
   updateRecordBtn();
   updateProgress(0);
   statusEl.innerHTML = 'loading <span>'+file.name+'</span>...';
-
+ 
   audio = new Audio();
   audio.preload = 'auto';
-
+ 
   audio.addEventListener('loadedmetadata', function() {
     audioDur = audio.duration;
     audioHdrTime.textContent = formatTime(audioDur);
@@ -315,21 +423,21 @@ mp3Input.addEventListener('change', function() {
     statusEl.innerHTML = 'loaded <span>'+file.name+'</span> \u2014 press \u25B6 play, then \u25CF record';
     renderBeatMarkers();
   });
-
+ 
   audio.addEventListener('error', function() {
     statusEl.innerHTML = '<span style="color:var(--accent3)">could not load this file (code '+
       (audio.error ? audio.error.code : '?')+')</span>';
   });
-
+ 
   audio.addEventListener('ended', function() {
-    if (isRecording) { isRecording = false; updateRecordBtn(); }
+    if (isRecording) { isRecording = false; document.body.classList.remove('recording'); updateRecordBtn(); }
     updatePlayBtn(); cancelAnimationFrame(rafId);
   });
-
+ 
   audio.src = URL.createObjectURL(file);
   audio.load();
 });
-
+ 
 // ── Image upload ──
 imgInput.addEventListener('change', function() {
   const file = this.files[0];
@@ -356,18 +464,18 @@ imgInput.addEventListener('change', function() {
   };
   reader.readAsDataURL(file);
 });
-
+ 
 // ── Cell click ──
 function handleCellClick(c) {
   if (isRecording && audio && !audio.paused) { captureBeat(c.id); return; }
-
+ 
   const wasActive = activeId === c.id;
   document.querySelectorAll('.cell').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.timing-row').forEach(el => el.classList.remove('row-active'));
   activeId = null; drawAim(null);
-
+ 
   if (wasActive) { setCenterImage('idle'); statusEl.innerHTML = 'deselected'; return; }
-
+ 
   activeId = c.id;
   const el = document.getElementById('cell-'+c.id);
   el.classList.add('active','flash');
@@ -376,23 +484,26 @@ function handleCellClick(c) {
   drawAim(c.id); setCenterImage(c.id);
   statusEl.innerHTML = 'aimed at <span>'+c.label+'</span> \u2014 spawn @ <span>'+boxState[c.id].spawnTime.toFixed(1)+'s</span>';
 }
-
+ 
 // ── Beat recording ──
 function captureBeat(id) {
   const t = audio.currentTime;
   recordedBeats.push({id, time:t, color:BOX_COLORS[id]});
   recordedBeats.sort((a,b) => a.time - b.time);
+ 
+  // Flash cell
   const el = document.getElementById('cell-'+id);
-  el.classList.add('record-flash');
-  el.addEventListener('animationend', () => el.classList.remove('record-flash'), {once:true});
+  el.classList.add('record-flash','key-press');
+  el.addEventListener('animationend', () => { el.classList.remove('record-flash','key-press'); }, {once:true});
+ 
   boxState[id].spawnTime = t;
   document.getElementById('slider-'+id).value = t;
   document.getElementById('val-'+id).textContent = t.toFixed(1)+'s';
   renderBeatsList(); renderBeatMarkers();
   const lbl = CELLS.find(x=>x.id===id).label;
-  statusEl.innerHTML = '<span class="rec">\u25CF REC</span> '+lbl+' @ <span>'+t.toFixed(2)+'s</span>';
+  statusEl.innerHTML = '<span class="rec">\u25CF REC</span> '+lbl+' [<span>'+KEY_DISPLAY[id]+'</span>] @ <span>'+t.toFixed(2)+'s</span>';
 }
-
+ 
 function renderBeatsList() {
   beatsList.innerHTML = '';
   beatsPanel.style.display = recordedBeats.length ? 'block' : 'none';
@@ -404,13 +515,14 @@ function renderBeatsList() {
     div.className = 'beat-entry';
     div.innerHTML = '<span class="be-idx">'+String(i+1).padStart(2,'0')+'</span>'+
       '<span class="be-box"><span class="color-dot" style="background:'+b.color+'"></span>'+lbl+'</span>'+
+      '<span style="color:#555;min-width:24px;font-size:9px;">['+KEY_DISPLAY[b.id]+']</span>'+
       '<span class="be-time">'+b.time.toFixed(3)+'s</span>'+
       '<span class="be-del" onclick="deleteBeat('+i+')">\u2715</span>';
     beatsList.appendChild(div);
   });
   beatsList.scrollTop = beatsList.scrollHeight;
 }
-
+ 
 function renderBeatMarkers() {
   progressWrap.querySelectorAll('.beat-marker').forEach(m => m.remove());
   if (!audioDur) return;
@@ -421,14 +533,14 @@ function renderBeatMarkers() {
     progressWrap.appendChild(m);
   });
 }
-
+ 
 function deleteBeat(i) { recordedBeats.splice(i,1); renderBeatsList(); renderBeatMarkers(); }
-
+ 
 function clearBeats() {
   if (!confirm('Clear all recorded beats?')) return;
   recordedBeats = []; renderBeatsList(); renderBeatMarkers();
 }
-
+ 
 // ── Playback controls ──
 function togglePlay() {
   if (!audio) return;
@@ -437,50 +549,52 @@ function togglePlay() {
       statusEl.innerHTML = '<span style="color:var(--accent3)">playback error: '+err.message+'</span>';
     });
     startRaf(); updatePlayBtn();
-    if (isRecording) statusEl.innerHTML = '<span class="rec">\u25CF RECORDING</span> \u2014 click boxes to capture beats';
+    if (isRecording) statusEl.innerHTML = '<span class="rec">\u25CF RECORDING</span> \u2014 use Q W E / A D / Z X C keys';
   } else {
     audio.pause(); cancelAnimationFrame(rafId); updatePlayBtn();
   }
 }
-
+ 
 function stopAudio() {
   if (!audio) return;
   audio.pause(); audio.currentTime = 0;
   cancelAnimationFrame(rafId); updateProgress(0); updatePlayBtn();
-  if (isRecording) { isRecording = false; updateRecordBtn(); }
+  if (isRecording) { isRecording = false; document.body.classList.remove('recording'); updateRecordBtn(); }
 }
-
+ 
 function toggleRecord() {
   if (!audio) return;
-  isRecording = !isRecording; updateRecordBtn();
+  isRecording = !isRecording;
+  document.body.classList.toggle('recording', isRecording);
+  updateRecordBtn();
   if (isRecording) {
     if (audio.paused) {
       audio.currentTime = 0;
       audio.play().catch(()=>{});
       startRaf(); updatePlayBtn();
     }
-    statusEl.innerHTML = '<span class="rec">\u25CF RECORDING</span> \u2014 click boxes to capture beats';
+    statusEl.innerHTML = '<span class="rec">\u25CF RECORDING</span> \u2014 use <span>Q W E</span> / <span>A D</span> / <span>Z X C</span> keys';
   } else {
     statusEl.innerHTML = 'recording stopped \u2014 <span>'+recordedBeats.length+' beats</span> captured';
   }
 }
-
+ 
 function updatePlayBtn() {
   if (!audio) return;
   document.getElementById('btnPlay').textContent = audio.paused ? '\u25B6 play' : '\u2016 pause';
 }
-
+ 
 function updateRecordBtn() {
   const btn = document.getElementById('btnRecord');
   if (isRecording) { btn.textContent = '\u25A0 stop rec'; btn.classList.add('recording'); }
   else             { btn.textContent = '\u25CF record';   btn.classList.remove('recording'); }
 }
-
+ 
 function startRaf() {
   cancelAnimationFrame(rafId);
   (function tick() { if (audio && !audio.paused) { updateProgress(audio.currentTime); rafId = requestAnimationFrame(tick); } })();
 }
-
+ 
 function updateProgress(t) {
   const pct = audioDur ? (t/audioDur)*100 : 0;
   progressBar.style.width = pct+'%';
@@ -488,19 +602,19 @@ function updateProgress(t) {
   progressTime.textContent = formatTime(t)+' / '+formatTime(audioDur);
   audioHdrTime.textContent = formatTime(t)+' / '+formatTime(audioDur);
 }
-
+ 
 progressWrap.addEventListener('click', function(e) {
   if (!audio || !audioDur) return;
   const r = progressWrap.getBoundingClientRect();
   audio.currentTime = Math.max(0, Math.min(1, (e.clientX-r.left)/r.width)) * audioDur;
   updateProgress(audio.currentTime);
 });
-
+ 
 function formatTime(s) {
   if (!isFinite(s)) return '0:00';
   return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
 }
-
+ 
 // ── Shooter / enemy images ──
 function setCenterImage(key) {
   const center = document.getElementById('cell-center');
@@ -514,7 +628,7 @@ function setCenterImage(key) {
     center.prepend(img); lbl.style.display = 'none';
   } else { lbl.style.display = ''; }
 }
-
+ 
 function setEnemyImage(id, src) {
   const cell = document.getElementById('cell-'+id);
   cell.querySelectorAll('img').forEach(i=>i.remove());
@@ -524,7 +638,7 @@ function setEnemyImage(id, src) {
     document.getElementById('label-'+id).style.display = 'none';
   } else { document.getElementById('label-'+id).style.display = ''; }
 }
-
+ 
 // ── Aim canvas ──
 function sizeCanvas() {
   const r = canvas.parentElement.getBoundingClientRect();
@@ -550,23 +664,38 @@ function drawAim(targetId) {
   ctx.restore();
 }
 window.addEventListener('resize', () => { if (activeId) drawAim(activeId); });
-
+ 
 // ── Keyboard shortcuts ──
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
-  if (e.code==='Space') { e.preventDefault(); togglePlay(); }
-  if (e.code==='KeyR')  { e.preventDefault(); toggleRecord(); }
-  const km = {Numpad7:'tl',Numpad8:'tc',Numpad9:'tr',Numpad4:'ml',Numpad6:'mr',Numpad1:'bl',Numpad2:'bc',Numpad3:'br',
-               Digit7:'tl',Digit8:'tc',Digit9:'tr',Digit4:'ml',Digit6:'mr',Digit1:'bl',Digit2:'bc',Digit3:'br'};
-  if (isRecording && audio && !audio.paused && km[e.code]) { e.preventDefault(); captureBeat(km[e.code]); }
+ 
+  // Space = play/pause
+  if (e.code === 'Space') { e.preventDefault(); togglePlay(); return; }
+  // R = toggle record
+  if (e.code === 'KeyR')  { e.preventDefault(); toggleRecord(); return; }
+ 
+  // Beat capture keys (QWEASDZXC) — active during recording
+  if (isRecording && audio && !audio.paused && KEY_MAP[e.code]) {
+    e.preventDefault();
+    captureBeat(KEY_MAP[e.code]);
+    return;
+  }
+ 
+  // Also allow clicking cells via keys even outside recording (select/aim)
+  if (!isRecording && KEY_MAP[e.code]) {
+    e.preventDefault();
+    const c = CELLS.find(x => x.id === KEY_MAP[e.code]);
+    if (c) handleCellClick(c);
+  }
 });
-
-// ── Export (pure valid JSON) ──
+ 
+// ── Export ──
 function buildConfig() {
   const spawnTiming = {};
   DIRS.forEach(c => {
     spawnTiming[c.id] = {
       label: c.label,
+      key: KEY_DISPLAY[c.id],
       spawnTime: parseFloat(boxState[c.id].spawnTime.toFixed(3)),
       image: boxState[c.id].imageName || null
     };
@@ -577,11 +706,12 @@ function buildConfig() {
       index: i + 1,
       box: b.id,
       label: CELLS.find(x => x.id === b.id).label,
+      key: KEY_DISPLAY[b.id],
       time: parseFloat(b.time.toFixed(3))
     }))
   };
 }
-
+ 
 function toggleExport() {
   const box     = document.getElementById('exportBox');
   const actions = document.getElementById('exportActions');
@@ -595,7 +725,7 @@ function toggleExport() {
   box.style.display = 'block';
   actions.style.display = 'flex';
 }
-
+ 
 function downloadJSON() {
   const blob = new Blob([lastJsonStr || JSON.stringify(buildConfig(), null, 2)], {type: 'application/json'});
   const a = document.createElement('a');
@@ -604,7 +734,7 @@ function downloadJSON() {
   a.click();
   URL.revokeObjectURL(a.href);
 }
-
+ 
 function copyJSON() {
   const str = lastJsonStr || JSON.stringify(buildConfig(), null, 2);
   navigator.clipboard.writeText(str).then(() => {
