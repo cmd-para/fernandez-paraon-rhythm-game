@@ -785,6 +785,9 @@ const BOX_COLORS = {
   bl: '#50fa7b', bc: '#f1fa8c', br: '#8be9fd',
 };
 
+const recBoxState = {};
+REC_DIRS.forEach(c => { recBoxState[c.id] = { spawnTime: 0 }; });
+
 let recBeats = [];
 let recActiveId = null;
 let recAudio = null;
@@ -841,6 +844,29 @@ function initRecorder() {
   });
 
 
+
+  // Timing rows
+  REC_DIRS.forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'timing-row';
+    row.id = 'recrow-' + c.id;
+    row.innerHTML = `
+      <div class="row-id">
+        <div class="row-dot" id="recdot-${c.id}" style="background:${BOX_COLORS[c.id]}33;border:1px solid ${BOX_COLORS[c.id]}88;"></div>
+        <span>${c.label.split('-')[0]}</span>
+      </div>
+      <div class="timing-input-wrap">
+        <input type="range" id="recslider-${c.id}" min="0" max="300" step="0.1" value="0">
+      </div>
+      <div class="timing-val" id="recval-${c.id}">0.0s</div>`;
+    document.getElementById('timingRows').appendChild(row);
+
+    document.getElementById('recslider-' + c.id).addEventListener('input', e => {
+      const v = parseFloat(e.target.value);
+      recBoxState[c.id].spawnTime = v;
+      document.getElementById('recval-' + c.id).textContent = v.toFixed(1) + 's';
+    });
+  });
 
   // MP3 upload
   document.getElementById('mp3Input').addEventListener('change', function () {
@@ -925,6 +951,7 @@ function recHandleCellClick(c) {
 
   const wasActive = recActiveId === c.id;
   document.querySelectorAll('#recGrid .cell').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.timing-row').forEach(el => el.classList.remove('row-active'));
 
   recActiveId = null;
   recDrawAim(null);
@@ -936,6 +963,7 @@ function recHandleCellClick(c) {
   el.classList.add('active', 'flash');
   el.addEventListener('animationend', () => el.classList.remove('flash'), { once: true });
   recDrawAim(c.id);
+  document.getElementById('recrow-' + c.id).classList.add('row-active');
   recSetStatus('aimed at <span>' + c.label + '</span> — spawn @ <span>' + recBoxState[c.id].spawnTime.toFixed(1) + 's</span>');
 }
 
@@ -949,6 +977,8 @@ function recCaptureBeat(id) {
   el.addEventListener('animationend', () => { el.classList.remove('record-flash', 'key-press'); }, { once: true });
 
   recBoxState[id].spawnTime = t;
+  document.getElementById('recslider-' + id).value = t;
+  document.getElementById('recval-' + id).textContent = t.toFixed(1) + 's';
   recRenderBeatsList();
   recRenderBeatMarkers();
 
@@ -1159,7 +1189,16 @@ window.addEventListener('resize', () => {
 });
 
 function recBuildConfig() {
+  const spawnTiming = {};
+  REC_DIRS.forEach(c => {
+    spawnTiming[c.id] = {
+      label: c.label,
+      key: REC_KEY_DISPLAY[c.id],
+      spawnTime: parseFloat(recBoxState[c.id].spawnTime.toFixed(3))
+    };
+  });
   return {
+    spawnTiming,
     recordedBeats: recBeats.map((b, i) => ({
       index: i + 1,
       box: b.id,
