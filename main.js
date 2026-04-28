@@ -146,7 +146,78 @@ const confirmOverlay = document.getElementById('confirmOverlay');
 
 function enterGame(mode) {
   document.getElementById('gameModeLabel').textContent = mode;
-  showScreen('screen-game');
+
+  // Reset game state for a fresh load
+  audioPlayer.pause();
+  audioPlayer.src = '';
+  audioReady = false;
+  chartReady = false;
+  isPlaying = false;
+  score = 0;
+  beats = [];
+  activeNotes.forEach(n => n.el && n.el.remove());
+  activeNotes = [];
+  document.getElementById('score').textContent = '000000';
+  btnPlay.disabled = true;
+  btnPlay.textContent = 'WAITING FOR FILES...';
+  btnRestart.disabled = true;
+
+  const importZone = document.getElementById('importZone');
+
+  if (mode === 'OFFICIAL' && window.selectedOfficialLevel) {
+    const lvl = window.selectedOfficialLevel;
+
+    // Hide the manual file-picker zone — files are loaded automatically
+    importZone.style.display = 'none';
+
+    document.getElementById('audioName').textContent = '—';
+    document.getElementById('chartName').textContent = '—';
+    statusBar.innerHTML = `loading <span>${lvl.song_name}</span>…`;
+
+    showScreen('screen-game');
+
+    loadOfficialLevel(lvl);
+  } else {
+    // Custom mode — show the import zone
+    importZone.style.display = '';
+    statusBar.innerHTML = 'load an mp3 and a json chart to begin';
+    showScreen('screen-game');
+  }
+}
+
+async function loadOfficialLevel(lvl) {
+  try {
+    // ── 1. Fetch the audio file ──────────────────────────────────────────
+    statusBar.innerHTML = `fetching audio… <span>${lvl.song_name}</span>`;
+    const audioRes = await fetch(lvl.song_file);
+    if (!audioRes.ok) throw new Error(`Audio fetch failed: HTTP ${audioRes.status} for "${lvl.song_file}"`);
+    const audioBlob = await audioRes.blob();
+    audioPlayer.src = URL.createObjectURL(audioBlob);
+    audioPlayer.volume = gameVolume;
+    document.getElementById('audioName').textContent = lvl.song_name + ' — ' + lvl.artist;
+    audioReady = true;
+
+    // ── 2. Fetch the chart JSON ──────────────────────────────────────────
+    statusBar.innerHTML = `fetching chart… <span>${lvl.song_name}</span>`;
+    const chartRes = await fetch(lvl.beat_config_file);
+    if (!chartRes.ok) throw new Error(`Chart fetch failed: HTTP ${chartRes.status} for "${lvl.beat_config_file}"`);
+    const data = await chartRes.json();
+    const rawBeats = data.recordedBeats || data.RECORDED_BEATS;
+    if (!rawBeats || !Array.isArray(rawBeats)) {
+      statusBar.innerHTML = '<span class="err">JSON error: no recordedBeats array found in chart</span>';
+      return;
+    }
+    beats = rawBeats.map(b => ({ box: b.box, time: b.time, spawned: false, hit: false }));
+    document.getElementById('chartName').textContent = lvl.song_name + ' (' + beats.length + ' beats)';
+    chartReady = true;
+
+    // ── 3. Both loaded — enable play ────────────────────────────────────
+    checkReady();
+  } catch (err) {
+    statusBar.innerHTML = `<span class="err">Failed to load level: ${err.message}</span>`;
+    btnPlay.disabled = true;
+    btnRestart.disabled = true;
+  }
 }
 
 function pauseGameForMenu() {
