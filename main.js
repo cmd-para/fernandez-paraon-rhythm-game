@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initSplash();
   initGame();
+  initGuideLines();
   initRecorder();
   initTicker();
 });
@@ -1105,3 +1106,98 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   observer.observe(document.getElementById('screen-official-levels'), { attributes: true, attributeFilter: ['class'] });
 });
+
+/* ══════════════════════════════════════════
+   GUIDE LINES
+   Each of the 8 note cells has a fixed travel
+   axis.  We draw a line from the far edge of
+   the cell (the side the note comes from) all
+   the way to the matching edge of the screen.
+
+   Travel directions per cell id:
+     tl → from top-left  (diagonal)
+     tc → from top        (straight up)
+     tr → from top-right  (diagonal)
+     ml → from left       (straight left)
+     mr → from right      (straight right)
+     bl → from bot-left   (diagonal)
+     bc → from bottom     (straight down)
+     br → from bot-right  (diagonal)
+══════════════════════════════════════════ */
+
+function initGuideLines() {
+  const canvas = document.getElementById('guideCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  // direction each cell's notes travel FROM (outward vector)
+  const GUIDE_DIRS = {
+    tl: { dx: -1, dy: -1 },
+    tc: { dx: 0, dy: -1 },
+    tr: { dx: 1, dy: -1 },
+    ml: { dx: -1, dy: 0 },
+    mr: { dx: 1, dy: 0 },
+    bl: { dx: -1, dy: 1 },
+    bc: { dx: 0, dy: 1 },
+    br: { dx: 1, dy: 1 },
+  };
+
+  function drawGuides() {
+    // Size canvas to the full viewport so lines reach every edge/corner
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    Object.entries(GUIDE_DIRS).forEach(([cellId, dir]) => {
+      const cell = document.getElementById(`cell-${cellId}`);
+      if (!cell) return;
+
+      const cellRect = cell.getBoundingClientRect();
+
+      // Center of cell in viewport coords (canvas is fixed full-screen)
+      const cx = cellRect.left + cellRect.width / 2;
+      const cy = cellRect.top + cellRect.height / 2;
+
+      // Start point: edge/corner of the cell facing outward
+      const ex = cx + dir.dx * (cellRect.width / 2);
+      const ey = cy + dir.dy * (cellRect.height / 2);
+
+      // Project ray to the viewport boundary
+      let t = Infinity;
+      if (dir.dx < 0) t = Math.min(t, ex / -dir.dx);
+      if (dir.dx > 0) t = Math.min(t, (canvas.width - ex) / dir.dx);
+      if (dir.dy < 0) t = Math.min(t, ey / -dir.dy);
+      if (dir.dy > 0) t = Math.min(t, (canvas.height - ey) / dir.dy);
+
+      const endX = ex + dir.dx * t;
+      const endY = ey + dir.dy * t;
+
+      ctx.save();
+      ctx.strokeStyle = 'rgba(124, 111, 255, 0.28)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([8, 7]);
+      ctx.beginPath();
+      ctx.moveTo(endX, endY);
+      ctx.lineTo(ex, ey);
+      ctx.stroke();
+      ctx.restore();
+    });
+  }
+
+  function onScreenChange() {
+    if (document.getElementById('screen-game').classList.contains('active')) {
+      requestAnimationFrame(() => requestAnimationFrame(drawGuides));
+    }
+  }
+
+  new MutationObserver(onScreenChange).observe(
+    document.getElementById('screen-game'),
+    { attributes: true, attributeFilter: ['class'] }
+  );
+
+  window.addEventListener('resize', () => {
+    if (document.getElementById('screen-game').classList.contains('active')) drawGuides();
+  });
+
+  onScreenChange();
+}

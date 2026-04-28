@@ -1930,3 +1930,16 @@ label.ctrl-btn:hover {
   opacity: 0;
   transition: opacity 0.15s;
 }
+
+/* ══════════════════════════════════════════
+   GUIDE LINES CANVAS
+══════════════════════════════════════════ */
+#guideCanvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 1;
+  /* above bg, below grid (z-index: 2) and notes (z-index: 5) */
+}
