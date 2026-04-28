@@ -762,12 +762,6 @@ function confirmRestart() {
 /* ══════════════════════════════════════════
    RECORDER
 ══════════════════════════════════════════ */
-const REC_SHOOTER_IMAGES = {
-  idle: 'images/shooter_idle.png',
-  tl: 'images/shooter_tl.png', tc: 'images/shooter_tc.png', tr: 'images/shooter_tr.png',
-  ml: 'images/shooter_ml.png', mr: 'images/shooter_mr.png',
-  bl: 'images/shooter_bl.png', bc: 'images/shooter_bc.png', br: 'images/shooter_br.png',
-};
 
 const REC_CELLS = [
   { id: 'tl', label: 'TOP-LEFT' }, { id: 'tc', label: 'TOP' }, { id: 'tr', label: 'TOP-RIGHT' },
@@ -791,18 +785,13 @@ const BOX_COLORS = {
   bl: '#50fa7b', bc: '#f1fa8c', br: '#8be9fd',
 };
 
-const recBoxState = {};
-REC_DIRS.forEach(c => { recBoxState[c.id] = { imageSrc: null, imageName: null, spawnTime: 0 }; });
-
 let recBeats = [];
 let recActiveId = null;
-let recPendingImg = null;
 let recAudio = null;
 let recAudioDur = 0;
 let recIsRecording = false;
 let recRafId = null;
 let recLastJson = '';
-const recShooterImages = { ...REC_SHOOTER_IMAGES };
 
 function initRecorder() {
   const recGrid = document.getElementById('recGrid');
@@ -837,7 +826,6 @@ function initRecorder() {
     recGrid.appendChild(cell);
   });
 
-  recSetCenterImage('idle');
 
   // Key legend
   const legendBody = document.getElementById('keyLegendBody');
@@ -852,52 +840,7 @@ function initRecorder() {
     legendBody.appendChild(item);
   });
 
-  // Shooter toolbar
-  ['idle', ...REC_DIRS.map(d => d.id)].forEach(key => {
-    const lbl = key === 'idle' ? 'idle' : REC_DIRS.find(d => d.id === key).label.toLowerCase();
-    const btn = document.createElement('button');
-    btn.className = 'ctrl-btn';
-    btn.textContent = key === 'idle' ? '+ idle' : 'aim→' + lbl.split('-')[0];
-    btn.style.fontSize = '9px';
-    btn.onclick = () => {
-      recPendingImg = 'shooter-' + key;
-      const imgInput = document.getElementById('imgInput');
-      imgInput.value = '';
-      imgInput.click();
-    };
-    document.getElementById('shooterToolbar').appendChild(btn);
-  });
 
-  // Timing rows
-  REC_DIRS.forEach(c => {
-    const row = document.createElement('div');
-    row.className = 'timing-row';
-    row.id = 'recrow-' + c.id;
-    row.innerHTML = `
-      <div class="row-id">
-        <div class="row-dot" id="recdot-${c.id}" style="background:${BOX_COLORS[c.id]}33;border:1px solid ${BOX_COLORS[c.id]}88;"></div>
-        <span>${c.label.split('-')[0]}</span>
-      </div>
-      <div class="timing-input-wrap">
-        <input type="range" id="recslider-${c.id}" min="0" max="300" step="0.1" value="0">
-      </div>
-      <div class="timing-val" id="recval-${c.id}">0.0s</div>
-      <button class="upload-btn" id="recubtn-${c.id}">+ img</button>`;
-    document.getElementById('timingRows').appendChild(row);
-
-    document.getElementById('recslider-' + c.id).addEventListener('input', e => {
-      const v = parseFloat(e.target.value);
-      recBoxState[c.id].spawnTime = v;
-      document.getElementById('recval-' + c.id).textContent = v.toFixed(1) + 's';
-    });
-
-    document.getElementById('recubtn-' + c.id).addEventListener('click', () => {
-      recPendingImg = 'enemy-' + c.id;
-      const imgInput = document.getElementById('imgInput');
-      imgInput.value = '';
-      imgInput.click();
-    });
-  });
 
   // MP3 upload
   document.getElementById('mp3Input').addEventListener('change', function () {
@@ -941,33 +884,6 @@ function initRecorder() {
     recAudio.load();
   });
 
-  // Image upload
-  document.getElementById('imgInput').addEventListener('change', function () {
-    const file = this.files[0];
-    if (!file || !recPendingImg) return;
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      const src = e.target.result;
-      if (recPendingImg.startsWith('shooter-')) {
-        const id = recPendingImg.replace('shooter-', '');
-        recShooterImages[id] = src;
-        if (id === 'idle' && !recActiveId) recSetCenterImage('idle');
-        else if (recActiveId === id) recSetCenterImage(id);
-        recSetStatus('shooter image updated: <span>' + id + '</span>');
-      } else {
-        const id = recPendingImg.replace('enemy-', '');
-        recBoxState[id].imageSrc = src;
-        recBoxState[id].imageName = file.name;
-        recSetEnemyImage(id, src);
-        const btn = document.getElementById('recubtn-' + id);
-        btn.textContent = '✓ ' + file.name.slice(0, 10) + (file.name.length > 10 ? '…' : '');
-        btn.classList.add('has-image');
-        document.getElementById('recdot-' + id).classList.add('has-image');
-        recSetStatus('enemy image set: <span>' + id + '</span>');
-      }
-    };
-    reader.readAsDataURL(file);
-  });
 
   // Progress bar click
   document.getElementById('progressWrap').addEventListener('click', function (e) {
@@ -1009,19 +925,17 @@ function recHandleCellClick(c) {
 
   const wasActive = recActiveId === c.id;
   document.querySelectorAll('#recGrid .cell').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.timing-row').forEach(el => el.classList.remove('row-active'));
+
   recActiveId = null;
   recDrawAim(null);
 
-  if (wasActive) { recSetCenterImage('idle'); recSetStatus('deselected'); return; }
+  if (wasActive) { recSetStatus('deselected'); return; }
 
   recActiveId = c.id;
   const el = document.getElementById('reccell-' + c.id);
   el.classList.add('active', 'flash');
   el.addEventListener('animationend', () => el.classList.remove('flash'), { once: true });
-  document.getElementById('recrow-' + c.id).classList.add('row-active');
   recDrawAim(c.id);
-  recSetCenterImage(c.id);
   recSetStatus('aimed at <span>' + c.label + '</span> — spawn @ <span>' + recBoxState[c.id].spawnTime.toFixed(1) + 's</span>');
 }
 
@@ -1035,8 +949,6 @@ function recCaptureBeat(id) {
   el.addEventListener('animationend', () => { el.classList.remove('record-flash', 'key-press'); }, { once: true });
 
   recBoxState[id].spawnTime = t;
-  document.getElementById('recslider-' + id).value = t;
-  document.getElementById('recval-' + id).textContent = t.toFixed(1) + 's';
   recRenderBeatsList();
   recRenderBeatMarkers();
 
@@ -1209,38 +1121,6 @@ function recFormatTime(s) {
   return Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
 }
 
-function recSetCenterImage(key) {
-  const center = document.getElementById('reccell-center');
-  if (!center) return;
-  center.querySelectorAll('img').forEach(i => i.remove());
-  const src = recShooterImages[key] || recShooterImages['idle'];
-  const lbl = document.getElementById('reclabel-center');
-  if (src) {
-    const img = document.createElement('img');
-    img.src = src; img.alt = 'shooter';
-    img.onerror = () => { img.remove(); if (lbl) lbl.style.display = ''; };
-    center.prepend(img);
-    if (lbl) lbl.style.display = 'none';
-  } else {
-    if (lbl) lbl.style.display = '';
-  }
-}
-
-function recSetEnemyImage(id, src) {
-  const cell = document.getElementById('reccell-' + id);
-  if (!cell) return;
-  cell.querySelectorAll('img').forEach(i => i.remove());
-  if (src) {
-    const img = document.createElement('img');
-    img.src = src; img.alt = id;
-    cell.prepend(img);
-    const lbl = document.getElementById('reclabel-' + id);
-    if (lbl) lbl.style.display = 'none';
-  } else {
-    const lbl = document.getElementById('reclabel-' + id);
-    if (lbl) lbl.style.display = '';
-  }
-}
 
 function recDrawAim(targetId) {
   const canvas = document.getElementById('aimCanvas');
@@ -1279,17 +1159,7 @@ window.addEventListener('resize', () => {
 });
 
 function recBuildConfig() {
-  const spawnTiming = {};
-  REC_DIRS.forEach(c => {
-    spawnTiming[c.id] = {
-      label: c.label,
-      key: REC_KEY_DISPLAY[c.id],
-      spawnTime: parseFloat(recBoxState[c.id].spawnTime.toFixed(3)),
-      image: recBoxState[c.id].imageName || null
-    };
-  });
   return {
-    spawnTiming,
     recordedBeats: recBeats.map((b, i) => ({
       index: i + 1,
       box: b.id,
