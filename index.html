@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>3bySOUND</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap"
+    rel="stylesheet">
 </head>
+
 <body>
 
   <!-- ══════════════════════════════════════════
@@ -69,7 +73,8 @@
 
     <div class="menu-corner-tl"></div>
     <div class="menu-corner-br"></div>
-    <div class="menu-ticker">3BYSOUND — RHYTHM GAME — PRESS TO SELECT — 3BYSOUND — RHYTHM GAME — PRESS TO SELECT — </div>
+    <div class="menu-ticker">3BYSOUND — RHYTHM GAME — PRESS TO SELECT — 3BYSOUND — RHYTHM GAME — PRESS TO SELECT —
+    </div>
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -98,6 +103,39 @@
         </div>
       </div>
       <button class="back-btn" data-target="screen-menu">← BACK</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN: OFFICIAL LEVELS
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="screen-official-levels">
+    <div class="menu-bg-grid"></div>
+    <div class="official-levels-wrap">
+      <div class="sub-title">OFFICIAL LEVELS</div>
+
+      <div class="levels-toolbar">
+        <div class="levels-search-wrap">
+          <span class="levels-search-icon">⌕</span>
+          <input type="text" id="levelsSearch" class="levels-search" placeholder="search tracks…">
+        </div>
+        <div class="levels-sort-wrap">
+          <span class="levels-sort-label">SORT</span>
+          <select id="levelsSort" class="levels-sort">
+            <option value="default">Default</option>
+            <option value="name">Name A–Z</option>
+            <option value="artist">Artist A–Z</option>
+            <option value="difficulty">Difficulty</option>
+            <option value="length">Length</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="levels-list" id="levelsList">
+        <div class="levels-loading" id="levelsLoading">Loading levels…</div>
+      </div>
+
+      <button class="back-btn" data-target="screen-play">← BACK</button>
     </div>
   </div>
 
@@ -230,7 +268,8 @@
                 <button class="ctrl-btn" id="recBtnPlay" onclick="recTogglePlay()" disabled>▶ play</button>
                 <button class="ctrl-btn" id="recBtnStop" onclick="recStopAudio()" disabled>■ stop</button>
                 <button class="ctrl-btn" id="recBtnRecord" onclick="recToggleRecord()" disabled>● record</button>
-                <button class="ctrl-btn danger" id="recBtnClearBeats" onclick="recClearBeats()" style="margin-left:auto;" disabled>✕ clear</button>
+                <button class="ctrl-btn danger" id="recBtnClearBeats" onclick="recClearBeats()"
+                  style="margin-left:auto;" disabled>✕ clear</button>
               </div>
             </div>
           </div>
@@ -256,7 +295,8 @@
           <!-- Export -->
           <div class="export-actions-row">
             <button class="btn" onclick="recToggleExport()">export config ↓</button>
-            <button class="btn primary" id="btnDownloadJson" onclick="recDownloadJSON()" style="display:none;">⇓ download .json</button>
+            <button class="btn primary" id="btnDownloadJson" onclick="recDownloadJSON()" style="display:none;">⇓
+              download .json</button>
             <button class="btn" id="btnCopyJson" onclick="recCopyJSON()" style="display:none;">⊟ copy</button>
           </div>
           <pre class="export-box" id="exportBox" style="display:none;"></pre>
@@ -361,4 +401,5 @@
 
   <script src="main.js"></script>
 </body>
+
 </html>

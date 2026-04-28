@@ -27,8 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Play sub-items
-  document.getElementById('btnOfficialLevels').addEventListener('click', () => enterGame('OFFICIAL'));
-  document.getElementById('btnOfficialLevels').addEventListener('keydown', e => { if (e.key === 'Enter') enterGame('OFFICIAL'); });
+  document.getElementById('btnOfficialLevels').addEventListener('click', () => showScreen('screen-official-levels'));
+  document.getElementById('btnOfficialLevels').addEventListener('keydown', e => { if (e.key === 'Enter') showScreen('screen-official-levels'); });
   document.getElementById('btnCustomLevels').addEventListener('click', () => enterGame('CUSTOM'));
   document.getElementById('btnCustomLevels').addEventListener('keydown', e => { if (e.key === 'Enter') enterGame('CUSTOM'); });
 
@@ -126,21 +126,21 @@ const CELLS = [
 ];
 
 let approachTime = 2.5;
-let hitWindow    = 0.25;
-let gameVolume   = 1.0;
-const OFFSET     = 800;
+let hitWindow = 0.25;
+let gameVolume = 1.0;
+const OFFSET = 800;
 
-let beats       = [];
+let beats = [];
 let activeNotes = [];
-let score       = 0;
-let isPlaying   = false;
-let audioReady  = false;
-let chartReady  = false;
+let score = 0;
+let isPlaying = false;
+let audioReady = false;
+let chartReady = false;
 
 const audioPlayer = document.getElementById('gameAudio');
-const btnPlay    = document.getElementById('btnPlay');
+const btnPlay = document.getElementById('btnPlay');
 const btnRestart = document.getElementById('btnRestart');
-const statusBar  = document.getElementById('statusBar');
+const statusBar = document.getElementById('statusBar');
 const confirmOverlay = document.getElementById('confirmOverlay');
 
 function enterGame(mode) {
@@ -230,7 +230,7 @@ function initGame() {
     }
   });
 
-  confirmOverlay.addEventListener('click', function(e) {
+  confirmOverlay.addEventListener('click', function (e) {
     if (e.target === this) cancelRestart();
   });
 
@@ -312,11 +312,11 @@ function updateNotes(now) {
     const target = document.getElementById(`cell-${n.box}`);
     if (!target) { activeNotes.splice(i, 1); continue; }
 
-    const rect     = target.getBoundingClientRect();
+    const rect = target.getBoundingClientRect();
     const areaRect = document.getElementById('gameArea').getBoundingClientRect();
 
     const tx = rect.left - areaRect.left + (rect.width / 2) - 22;
-    const ty = rect.top  - areaRect.top  + (rect.height / 2) - 22;
+    const ty = rect.top - areaRect.top + (rect.height / 2) - 22;
 
     let sx = tx, sy = ty;
     if (n.box.includes('t')) sy -= OFFSET;
@@ -325,16 +325,16 @@ function updateNotes(now) {
     if (n.box.includes('r')) sx += OFFSET;
 
     const p = Math.max(0, progress);
-    n.el.style.left      = (sx + (tx - sx) * p) + 'px';
-    n.el.style.top       = (sy + (ty - sy) * p) + 'px';
+    n.el.style.left = (sx + (tx - sx) * p) + 'px';
+    n.el.style.top = (sy + (ty - sy) * p) + 'px';
     n.el.style.transform = `scale(${0.5 + Math.min(p, 1) * 0.5})`;
   }
 }
 
 function getTier(delta) {
-  if (delta <= 0.08) return { points: 300, tierClass: 't300', ringColor: '#50fa7b', particleColors: ['#50fa7b','#b8ffcc','#ffffff','#50fa7b','#b8ffcc','#ffffff','#50fa7b','#b8ffcc'] };
-  if (delta <= 0.15) return { points: 100, tierClass: 't100', ringColor: '#f1fa8c', particleColors: ['#f1fa8c','#fffab0','#ffffff','#f1fa8c','#fffab0','#ffffff','#f1fa8c','#fffab0'] };
-  return                     { points: 50,  tierClass: 't50',  ringColor: '#ffb86c', particleColors: ['#ffb86c','#ffd4a8','#ffffff','#ffb86c','#ffd4a8','#ffffff','#ffb86c','#ffd4a8'] };
+  if (delta <= 0.08) return { points: 300, tierClass: 't300', ringColor: '#50fa7b', particleColors: ['#50fa7b', '#b8ffcc', '#ffffff', '#50fa7b', '#b8ffcc', '#ffffff', '#50fa7b', '#b8ffcc'] };
+  if (delta <= 0.15) return { points: 100, tierClass: 't100', ringColor: '#f1fa8c', particleColors: ['#f1fa8c', '#fffab0', '#ffffff', '#f1fa8c', '#fffab0', '#ffffff', '#f1fa8c', '#fffab0'] };
+  return { points: 50, tierClass: 't50', ringColor: '#ffb86c', particleColors: ['#ffb86c', '#ffd4a8', '#ffffff', '#ffb86c', '#ffd4a8', '#ffffff', '#ffb86c', '#ffd4a8'] };
 }
 
 function spawnBurst(x, y, ringColor, particleColors) {
@@ -343,18 +343,18 @@ function spawnBurst(x, y, ringColor, particleColors) {
     const ring = document.createElement('div');
     ring.className = 'pop-ring' + (r === 1 ? ' ring2' : '');
     ring.style.left = x + 'px';
-    ring.style.top  = y + 'px';
+    ring.style.top = y + 'px';
     ring.style.borderColor = ringColor;
     area.appendChild(ring);
     setTimeout(() => ring.remove(), 550);
   }
   for (let i = 0; i < 8; i++) {
     const angle = (i / 8) * Math.PI * 2;
-    const dist  = 28 + Math.random() * 20;
+    const dist = 28 + Math.random() * 20;
     const p = document.createElement('div');
     p.className = 'pop-particle';
     p.style.left = x + 'px';
-    p.style.top  = y + 'px';
+    p.style.top = y + 'px';
     p.style.background = particleColors[i];
     p.style.setProperty('--dx0', '0px');
     p.style.setProperty('--dy0', '0px');
@@ -367,11 +367,11 @@ function spawnBurst(x, y, ringColor, particleColors) {
 
 function spawnScorePopup(x, y, points, tierClass) {
   const area = document.getElementById('gameArea');
-  const el   = document.createElement('div');
-  el.className  = 'pop-score ' + tierClass;
+  const el = document.createElement('div');
+  el.className = 'pop-score ' + tierClass;
   el.textContent = '+' + points;
   el.style.left = x + 'px';
-  el.style.top  = y + 'px';
+  el.style.top = y + 'px';
   area.appendChild(el);
   setTimeout(() => el.remove(), 600);
 }
@@ -389,7 +389,7 @@ function checkHit(cid) {
   const { n, i: idx } = candidates[0];
 
   const delta = Math.abs(n.time - now);
-  const tier  = getTier(delta);
+  const tier = getTier(delta);
 
   score += tier.points;
   document.getElementById('score').textContent = score.toString().padStart(6, '0');
@@ -397,7 +397,7 @@ function checkHit(cid) {
   const noteRect = n.el.getBoundingClientRect();
   const areaRect = document.getElementById('gameArea').getBoundingClientRect();
   const bx = noteRect.left - areaRect.left + noteRect.width / 2;
-  const by = noteRect.top  - areaRect.top  + noteRect.height / 2;
+  const by = noteRect.top - areaRect.top + noteRect.height / 2;
 
   n.el.remove();
   activeNotes.splice(idx, 1);
@@ -407,7 +407,7 @@ function checkHit(cid) {
 
   const cell = document.getElementById(`cell-${cid}`);
   cell.style.borderColor = tier.ringColor;
-  cell.style.boxShadow   = `0 0 12px ${tier.ringColor}`;
+  cell.style.boxShadow = `0 0 12px ${tier.ringColor}`;
   setTimeout(() => { cell.style.borderColor = ''; cell.style.boxShadow = ''; }, 150);
 }
 
@@ -429,7 +429,7 @@ function confirmRestart() {
   audioPlayer.pause();
   audioPlayer.currentTime = 0;
   isPlaying = false;
-  score     = 0;
+  score = 0;
   document.getElementById('score').textContent = '000000';
   beats.forEach(b => { b.spawned = false; b.hit = false; });
   activeNotes.forEach(n => n.el.remove());
@@ -449,16 +449,16 @@ const REC_SHOOTER_IMAGES = {
 };
 
 const REC_CELLS = [
-  { id: 'tl', label: 'TOP-LEFT'    }, { id: 'tc', label: 'TOP'          }, { id: 'tr', label: 'TOP-RIGHT'   },
-  { id: 'ml', label: 'LEFT'        }, { id: 'center', label: 'SHOOTER'   }, { id: 'mr', label: 'RIGHT'       },
-  { id: 'bl', label: 'BOTTOM-LEFT' }, { id: 'bc', label: 'BOTTOM'        }, { id: 'br', label: 'BOTTOM-RIGHT' },
+  { id: 'tl', label: 'TOP-LEFT' }, { id: 'tc', label: 'TOP' }, { id: 'tr', label: 'TOP-RIGHT' },
+  { id: 'ml', label: 'LEFT' }, { id: 'center', label: 'SHOOTER' }, { id: 'mr', label: 'RIGHT' },
+  { id: 'bl', label: 'BOTTOM-LEFT' }, { id: 'bc', label: 'BOTTOM' }, { id: 'br', label: 'BOTTOM-RIGHT' },
 ];
 
 const REC_DIRS = REC_CELLS.filter(c => c.id !== 'center');
 
 const REC_KEY_MAP = {
   KeyQ: 'tl', KeyW: 'tc', KeyE: 'tr',
-  KeyA: 'ml',             KeyD: 'mr',
+  KeyA: 'ml', KeyD: 'mr',
   KeyZ: 'bl', KeyX: 'bc', KeyC: 'br',
 };
 
@@ -466,21 +466,21 @@ const REC_KEY_DISPLAY = { tl: 'Q', tc: 'W', tr: 'E', ml: 'A', mr: 'D', bl: 'Z', 
 
 const BOX_COLORS = {
   tl: '#7c6fff', tc: '#ff6b9d', tr: '#6bffda',
-  ml: '#ffb86c',               mr: '#ff5555',
+  ml: '#ffb86c', mr: '#ff5555',
   bl: '#50fa7b', bc: '#f1fa8c', br: '#8be9fd',
 };
 
 const recBoxState = {};
 REC_DIRS.forEach(c => { recBoxState[c.id] = { imageSrc: null, imageName: null, spawnTime: 0 }; });
 
-let recBeats      = [];
-let recActiveId   = null;
+let recBeats = [];
+let recActiveId = null;
 let recPendingImg = null;
-let recAudio      = null;
-let recAudioDur   = 0;
-let recIsRecording= false;
-let recRafId      = null;
-let recLastJson   = '';
+let recAudio = null;
+let recAudioDur = 0;
+let recIsRecording = false;
+let recRafId = null;
+let recLastJson = '';
 const recShooterImages = { ...REC_SHOOTER_IMAGES };
 
 function initRecorder() {
@@ -579,7 +579,7 @@ function initRecorder() {
   });
 
   // MP3 upload
-  document.getElementById('mp3Input').addEventListener('change', function() {
+  document.getElementById('mp3Input').addEventListener('change', function () {
     const file = this.files[0];
     if (!file) return;
     if (recAudio) { recAudio.pause(); recAudio = null; }
@@ -596,9 +596,9 @@ function initRecorder() {
     recAudio.addEventListener('loadedmetadata', () => {
       recAudioDur = recAudio.duration;
       document.getElementById('audioHeaderTime').textContent = recFormatTime(recAudioDur);
-      document.getElementById('recBtnPlay').disabled    = false;
-      document.getElementById('recBtnStop').disabled    = false;
-      document.getElementById('recBtnRecord').disabled  = false;
+      document.getElementById('recBtnPlay').disabled = false;
+      document.getElementById('recBtnStop').disabled = false;
+      document.getElementById('recBtnRecord').disabled = false;
       const fn = document.getElementById('audioFilename');
       fn.textContent = file.name;
       fn.classList.add('loaded');
@@ -621,11 +621,11 @@ function initRecorder() {
   });
 
   // Image upload
-  document.getElementById('imgInput').addEventListener('change', function() {
+  document.getElementById('imgInput').addEventListener('change', function () {
     const file = this.files[0];
     if (!file || !recPendingImg) return;
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
       const src = e.target.result;
       if (recPendingImg.startsWith('shooter-')) {
         const id = recPendingImg.replace('shooter-', '');
@@ -635,7 +635,7 @@ function initRecorder() {
         recSetStatus('shooter image updated: <span>' + id + '</span>');
       } else {
         const id = recPendingImg.replace('enemy-', '');
-        recBoxState[id].imageSrc  = src;
+        recBoxState[id].imageSrc = src;
         recBoxState[id].imageName = file.name;
         recSetEnemyImage(id, src);
         const btn = document.getElementById('recubtn-' + id);
@@ -649,7 +649,7 @@ function initRecorder() {
   });
 
   // Progress bar click
-  document.getElementById('progressWrap').addEventListener('click', function(e) {
+  document.getElementById('progressWrap').addEventListener('click', function (e) {
     if (!recAudio || !recAudioDur) return;
     const r = this.getBoundingClientRect();
     recAudio.currentTime = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * recAudioDur;
@@ -662,7 +662,7 @@ function initRecorder() {
     if (e.target.tagName === 'INPUT') return;
 
     if (e.code === 'Space') { e.preventDefault(); recTogglePlay(); return; }
-    if (e.code === 'KeyR')  { e.preventDefault(); recToggleRecord(); return; }
+    if (e.code === 'KeyR') { e.preventDefault(); recToggleRecord(); return; }
 
     if (recIsRecording && recAudio && !recAudio.paused && REC_KEY_MAP[e.code]) {
       e.preventDefault();
@@ -724,9 +724,9 @@ function recCaptureBeat(id) {
 }
 
 function recRenderBeatsList() {
-  const beatsList  = document.getElementById('beatsList');
+  const beatsList = document.getElementById('beatsList');
   const beatsPanel = document.getElementById('recBeatsPanel');
-  const beatCountEl= document.getElementById('beatCount');
+  const beatCountEl = document.getElementById('beatCount');
   beatsList.innerHTML = '';
   beatsPanel.style.display = recBeats.length ? 'block' : 'none';
   beatCountEl.textContent = recBeats.length;
@@ -792,7 +792,7 @@ function recToggleRecord() {
   if (recIsRecording) {
     if (recAudio.paused) {
       recAudio.currentTime = 0;
-      recAudio.play().catch(() => {});
+      recAudio.play().catch(() => { });
       recStartRaf(); recUpdatePlayBtn();
     }
     recSetStatus('<span class="rec">● RECORDING</span> — use <span>Q W E</span> / <span>A D</span> / <span>Z X C</span> keys');
@@ -809,7 +809,7 @@ function recUpdatePlayBtn() {
 function recUpdateRecordBtn() {
   const btn = document.getElementById('recBtnRecord');
   if (recIsRecording) { btn.textContent = '■ stop rec'; btn.classList.add('recording'); }
-  else                { btn.textContent = '● record';   btn.classList.remove('recording'); }
+  else { btn.textContent = '● record'; btn.classList.remove('recording'); }
 }
 
 function recStartRaf() {
@@ -824,11 +824,11 @@ function recStartRaf() {
 
 function recUpdateProgress(t) {
   const pct = recAudioDur ? (t / recAudioDur) * 100 : 0;
-  document.getElementById('progressBar').style.width    = pct + '%';
-  document.getElementById('progressPlayhead').style.left= pct + '%';
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressPlayhead').style.left = pct + '%';
   const timeStr = recFormatTime(t) + ' / ' + recFormatTime(recAudioDur);
-  document.getElementById('progressTime').textContent     = timeStr;
-  document.getElementById('audioHeaderTime').textContent  = timeStr;
+  document.getElementById('progressTime').textContent = timeStr;
+  document.getElementById('audioHeaderTime').textContent = timeStr;
 }
 
 function recFormatTime(s) {
@@ -871,9 +871,9 @@ function recSetEnemyImage(id, src) {
 
 function recDrawAim(targetId) {
   const canvas = document.getElementById('aimCanvas');
-  const ctx    = canvas.getContext('2d');
-  const wrap   = canvas.parentElement;
-  const r      = wrap.getBoundingClientRect();
+  const ctx = canvas.getContext('2d');
+  const wrap = canvas.parentElement;
+  const r = wrap.getBoundingClientRect();
   canvas.width = r.width; canvas.height = r.height;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   if (!targetId) return;
@@ -928,9 +928,9 @@ function recBuildConfig() {
 }
 
 function recToggleExport() {
-  const box     = document.getElementById('exportBox');
-  const dlBtn   = document.getElementById('btnDownloadJson');
-  const cpBtn   = document.getElementById('btnCopyJson');
+  const box = document.getElementById('exportBox');
+  const dlBtn = document.getElementById('btnDownloadJson');
+  const cpBtn = document.getElementById('btnCopyJson');
 
   if (box.style.display === 'block') {
     box.style.display = 'none';
@@ -946,10 +946,10 @@ function recToggleExport() {
 }
 
 function recDownloadJSON() {
-  const str  = recLastJson || JSON.stringify(recBuildConfig(), null, 2);
+  const str = recLastJson || JSON.stringify(recBuildConfig(), null, 2);
   const blob = new Blob([str], { type: 'application/json' });
-  const a    = document.createElement('a');
-  a.href     = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
   a.download = 'rhythm_config.json';
   a.click();
   URL.revokeObjectURL(a.href);
@@ -963,3 +963,145 @@ function recCopyJSON() {
     recSetStatus('<span style="color:var(--accent3)">clipboard copy failed</span>');
   });
 }
+
+/* ══════════════════════════════════════════
+   OFFICIAL LEVELS — CSV loader & list
+══════════════════════════════════════════ */
+
+const OFFICIAL_LEVELS_CSV = 'official_levels.csv';
+
+let officialLevels = [];       // parsed rows
+let officialLevelsLoaded = false;
+
+/** Parse a CSV string into an array of objects using the header row as keys */
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.trim());
+  return lines.slice(1).map(line => {
+    // Handle quoted fields that may contain commas
+    const fields = [];
+    let current = '', inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQuotes = !inQuotes; }
+      else if (ch === ',' && !inQuotes) { fields.push(current.trim()); current = ''; }
+      else { current += ch; }
+    }
+    fields.push(current.trim());
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = fields[i] !== undefined ? fields[i] : ''; });
+    return obj;
+  });
+}
+
+/** Format seconds (e.g. 187) to "3:07" */
+function formatLength(seconds) {
+  const s = parseInt(seconds, 10);
+  if (isNaN(s)) return seconds;
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
+/** Return a CSS class name and label for a difficulty value (1–10) */
+function diffClass(d) {
+  const n = parseInt(d, 10);
+  if (isNaN(n)) return { cls: 'diff-mid', label: d };
+  if (n <= 3) return { cls: 'diff-easy', label: `★ ${d}` };
+  if (n <= 6) return { cls: 'diff-mid', label: `★ ${d}` };
+  if (n <= 8) return { cls: 'diff-hard', label: `★ ${d}` };
+  return { cls: 'diff-ex', label: `★ ${d}` };
+}
+
+/** Render the levels list with optional filter string & sort key */
+function renderLevelsList(filter = '', sort = 'default') {
+  const list = document.getElementById('levelsList');
+  list.innerHTML = '';
+
+  let rows = [...officialLevels];
+
+  // Filter
+  if (filter) {
+    const q = filter.toLowerCase();
+    rows = rows.filter(r =>
+      (r.song_name || '').toLowerCase().includes(q) ||
+      (r.artist || '').toLowerCase().includes(q)
+    );
+  }
+
+  // Sort
+  if (sort === 'name') rows.sort((a, b) => (a.song_name || '').localeCompare(b.song_name || ''));
+  if (sort === 'artist') rows.sort((a, b) => (a.artist || '').localeCompare(b.artist || ''));
+  if (sort === 'difficulty') rows.sort((a, b) => parseInt(a.difficulty || 0) - parseInt(b.difficulty || 0));
+  if (sort === 'length') rows.sort((a, b) => parseInt(a.length_seconds || 0) - parseInt(b.length_seconds || 0));
+
+  if (rows.length === 0) {
+    list.innerHTML = '<div class="levels-empty">No levels found.</div>';
+    return;
+  }
+
+  rows.forEach(row => {
+    const diff = diffClass(row.difficulty);
+    const card = document.createElement('div');
+    card.className = 'level-card';
+    card.tabIndex = 0;
+    card.innerHTML = `
+      <div class="level-card-left">
+        <div class="level-song">${row.song_name || '—'}</div>
+        <div class="level-artist">${row.artist || '—'}</div>
+      </div>
+      <div class="level-card-right">
+        <span class="level-diff ${diff.cls}">${diff.label}</span>
+        <span class="level-len">⏱ ${formatLength(row.length_seconds)}</span>
+        <span class="level-play-btn">PLAY ▶</span>
+      </div>`;
+
+    const play = () => {
+      // Store selected level metadata so the game screen can use it
+      window.selectedOfficialLevel = row;
+      enterGame('OFFICIAL');
+    };
+    card.addEventListener('click', play);
+    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); play(); } });
+    list.appendChild(card);
+  });
+}
+
+/** Load the CSV then init the list + search/sort controls */
+async function initOfficialLevels() {
+  const loading = document.getElementById('levelsLoading');
+
+  try {
+    const res = await fetch(OFFICIAL_LEVELS_CSV);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    officialLevels = parseCSV(text);
+    officialLevelsLoaded = true;
+  } catch (err) {
+    if (loading) loading.innerHTML =
+      `<span class="err">Could not load levels list: ${err.message}</span>`;
+    return;
+  }
+
+  if (loading) loading.remove();
+  renderLevelsList();
+
+  const searchEl = document.getElementById('levelsSearch');
+  const sortEl = document.getElementById('levelsSort');
+
+  searchEl.addEventListener('input', () =>
+    renderLevelsList(searchEl.value, sortEl.value));
+  sortEl.addEventListener('change', () =>
+    renderLevelsList(searchEl.value, sortEl.value));
+}
+
+// Lazy-load when the screen is shown for the first time
+document.addEventListener('DOMContentLoaded', () => {
+  // Observe screen-official-levels becoming active
+  const observer = new MutationObserver(() => {
+    if (document.getElementById('screen-official-levels').classList.contains('active') &&
+      !officialLevelsLoaded) {
+      initOfficialLevels();
+    }
+  });
+  observer.observe(document.getElementById('screen-official-levels'), { attributes: true, attributeFilter: ['class'] });
+});
