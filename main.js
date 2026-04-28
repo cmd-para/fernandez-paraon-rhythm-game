@@ -787,18 +787,70 @@ function recStopAudio() {
 
 function recToggleRecord() {
   if (!recAudio) return;
-  recIsRecording = !recIsRecording;
-  document.body.classList.toggle('recording', recIsRecording);
-  recUpdateRecordBtn();
+
+  // If already recording, stop immediately
   if (recIsRecording) {
-    if (recAudio.paused) {
-      recAudio.currentTime = 0;
-      recAudio.play().catch(() => { });
-      recStartRaf(); recUpdatePlayBtn();
-    }
-    recSetStatus('<span class="rec">● RECORDING</span> — use <span>Q W E</span> / <span>A D</span> / <span>Z X C</span> keys');
-  } else {
+    recIsRecording = false;
+    document.body.classList.remove('recording');
+    recUpdateRecordBtn();
     recSetStatus('recording stopped — <span>' + recBeats.length + ' beats</span> captured');
+    return;
+  }
+
+  // Start a 3-second countdown before recording begins
+  const btn = document.getElementById('recBtnRecord');
+  btn.disabled = true;
+
+  let count = 3;
+  recShowCountdown(count);
+  recSetStatus('get ready… <span>' + count + '</span>');
+
+  const interval = setInterval(() => {
+    count--;
+    if (count > 0) {
+      recShowCountdown(count);
+      recSetStatus('get ready… <span>' + count + '</span>');
+    } else {
+      clearInterval(interval);
+      recHideCountdown();
+      btn.disabled = false;
+
+      // Begin recording
+      recIsRecording = true;
+      document.body.classList.add('recording');
+      recUpdateRecordBtn();
+      if (recAudio.paused) {
+        recAudio.currentTime = 0;
+        recAudio.play().catch(() => { });
+        recStartRaf(); recUpdatePlayBtn();
+      }
+      recSetStatus('<span class="rec">● RECORDING</span> — use <span>Q W E</span> / <span>A D</span> / <span>Z X C</span> keys');
+    }
+  }, 1000);
+}
+
+function recShowCountdown(n) {
+  let overlay = document.getElementById('recCountdownOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'recCountdownOverlay';
+    overlay.className = 'rec-countdown-overlay';
+    const recScreen = document.getElementById('screen-recorder');
+    recScreen.appendChild(overlay);
+  }
+  overlay.innerHTML = '<span class="rec-countdown-num">' + n + '</span>';
+  overlay.classList.add('visible');
+  // Re-trigger animation on each count change
+  const numEl = overlay.querySelector('.rec-countdown-num');
+  numEl.classList.remove('pop');
+  void numEl.offsetWidth; // reflow to restart animation
+  numEl.classList.add('pop');
+}
+
+function recHideCountdown() {
+  const overlay = document.getElementById('recCountdownOverlay');
+  if (overlay) {
+    overlay.classList.remove('visible');
   }
 }
 

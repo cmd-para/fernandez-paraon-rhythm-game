@@ -1943,3 +1943,47 @@ label.ctrl-btn:hover {
   z-index: 1;
   /* above bg, below grid (z-index: 2) and notes (z-index: 5) */
 }
+/* ══════════════════════════════════════════
+   RECORDER COUNTDOWN OVERLAY
+══════════════════════════════════════════ */
+.rec-countdown-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  background: rgba(10, 8, 20, 0.75);
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  border-radius: inherit;
+}
+
+.rec-countdown-overlay.visible {
+  display: flex;
+}
+
+.rec-countdown-num {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: clamp(80px, 20vw, 160px);
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow:
+    0 0 30px rgba(124, 111, 255, 0.9),
+    0 0 60px rgba(124, 111, 255, 0.5),
+    0 0 100px rgba(124, 111, 255, 0.3);
+  line-height: 1;
+  opacity: 0;
+  transform: scale(1.6);
+  transition: none;
+}
+
+.rec-countdown-num.pop {
+  animation: rec-countdown-pop 0.9s ease-out forwards;
+}
+
+@keyframes rec-countdown-pop {
+  0%   { opacity: 0; transform: scale(1.6); }
+  15%  { opacity: 1; transform: scale(1.0); }
+  70%  { opacity: 1; transform: scale(1.0); }
+  100% { opacity: 0; transform: scale(0.7); }
+}
