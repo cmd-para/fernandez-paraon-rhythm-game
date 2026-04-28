@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3bySOUND</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN: STUDIO SPLASH
+  ══════════════════════════════════════════ -->
+  <div class="screen active" id="screen-splash">
+    <div class="splash-inner">
+      <div class="studio-logo-wrap">
+        <img src="studio_logo.png" alt="Studio Logo" class="studio-logo" onerror="this.style.display='none'">
+        <div class="studio-logo-placeholder" id="logoPlaceholder">
+          <!-- Logo image goes here -->
+        </div>
+      </div>
+      <div class="splash-presents">PRESENTS</div>
+      <div class="splash-skip">press any key or tap to continue</div>
+    </div>
+    <div class="splash-scanlines"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN: MAIN MENU
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="screen-menu">
+    <div class="menu-bg-grid"></div>
+    <div class="menu-bg-glow"></div>
+
+    <div class="menu-layout">
+      <div class="menu-left">
+        <div class="game-title">
+          <span class="title-3">3</span><span class="title-by">by</span><span class="title-sound">SOUND</span>
+        </div>
+        <div class="title-tagline">// rhythm · reaction · precision</div>
+        <div class="title-version">v1.0</div>
+      </div>
+
+      <nav class="menu-nav" id="mainNav">
+        <div class="nav-item" data-target="screen-play" tabindex="0">
+          <span class="nav-arrow">▶</span>
+          <span class="nav-label">PLAY</span>
+          <span class="nav-sub">official &amp; custom levels</span>
+        </div>
+        <div class="nav-item" data-target="screen-create" tabindex="0">
+          <span class="nav-arrow">▶</span>
+          <span class="nav-label">CREATE</span>
+          <span class="nav-sub">build custom levels</span>
+        </div>
+        <div class="nav-item" data-target="screen-settings" tabindex="0">
+          <span class="nav-arrow">▶</span>
+          <span class="nav-label">SETTINGS</span>
+          <span class="nav-sub">audio &amp; gameplay</span>
+        </div>
+        <div class="nav-item" data-target="screen-credits" tabindex="0">
+          <span class="nav-arrow">▶</span>
+          <span class="nav-label">CREDITS</span>
+          <span class="nav-sub">the team</span>
+        </div>
+      </nav>
+    </div>
+
+    <div class="menu-corner-tl"></div>
+    <div class="menu-corner-br"></div>
+    <div class="menu-ticker">3BYSOUND — RHYTHM GAME — PRESS TO SELECT — 3BYSOUND — RHYTHM GAME — PRESS TO SELECT — </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN: PLAY (sub-menu)
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="screen-play">
+    <div class="menu-bg-grid"></div>
+    <div class="sub-menu-wrap">
+      <div class="sub-title">PLAY</div>
+      <div class="sub-nav">
+        <div class="sub-item" id="btnOfficialLevels" tabindex="0">
+          <div class="sub-item-icon">🎵</div>
+          <div class="sub-item-body">
+            <div class="sub-item-label">OFFICIAL LEVELS</div>
+            <div class="sub-item-desc">Curated tracks · Load MP3 + JSON chart</div>
+          </div>
+          <div class="sub-item-arrow">→</div>
+        </div>
+        <div class="sub-item" id="btnCustomLevels" tabindex="0">
+          <div class="sub-item-icon">🎮</div>
+          <div class="sub-item-body">
+            <div class="sub-item-label">CUSTOM LEVELS</div>
+            <div class="sub-item-desc">Your creations · Load any MP3 + chart</div>
+          </div>
+          <div class="sub-item-arrow">→</div>
+        </div>
+      </div>
+      <button class="back-btn" data-target="screen-menu">← BACK</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN: GAME (shared for official + custom)
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="screen-game">
+    <div class="game-ui">
+
+      <div class="game-topbar">
+        <button class="back-btn small" id="btnGameBack">← MENU</button>
+        <div class="score-display" id="score">000000</div>
+        <div class="game-mode-label" id="gameModeLabel">OFFICIAL</div>
+      </div>
+
+      <div class="import-zone" id="importZone">
+        <div class="file-group">
+          <label>1. MP3 AUDIO</label>
+          <input type="file" id="audioInput" accept="audio/*">
+          <label for="audioInput" class="file-pick-btn">choose file</label>
+          <span class="file-name" id="audioName">—</span>
+        </div>
+        <div class="file-group">
+          <label>2. TIMING CHART (.json)</label>
+          <input type="file" id="chartInput" accept=".json">
+          <label for="chartInput" class="file-pick-btn">choose file</label>
+          <span class="file-name" id="chartName">—</span>
+        </div>
+      </div>
+
+      <div class="game-container" id="gameArea">
+        <div class="grid" id="grid"></div>
+      </div>
+
+      <div class="status-bar" id="statusBar">load an mp3 and a json chart to begin</div>
+
+      <div class="game-bottom-bar">
+        <div class="speed-ctrl">
+          <label id="speedLabel">LEAD TIME: 2.5s</label>
+          <input type="range" id="speedSlider" min="0.5" max="5.0" step="0.1" value="2.5">
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="btnPlay" onclick="togglePlay()" disabled>WAITING FOR FILES...</button>
+          <button class="btn danger" id="btnRestart" onclick="askRestart()" disabled>↺ RESTART</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="confirm-overlay" id="confirmOverlay">
+      <div class="confirm-box">
+        <div class="confirm-title">⚠ Restart?</div>
+        <div class="confirm-sub">your current score will be lost.<br>this cannot be undone.</div>
+        <div class="confirm-actions">
+          <button class="btn danger" onclick="confirmRestart()">YES, RESTART</button>
+          <button class="btn" onclick="cancelRestart()">CANCEL</button>
+        </div>
+      </div>
+    </div>
+
+    <audio id="gameAudio"></audio>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN: CREATE (sub-menu)
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="screen-create">
+    <div class="menu-bg-grid"></div>
+    <div class="sub-menu-wrap">
+      <div class="sub-title">CREATE</div>
+      <div class="sub-nav">
+        <div class="sub-item" id="btnRecordLevel" tabindex="0">
+          <div class="sub-item-icon">⏺</div>
+          <div class="sub-item-body">
+            <div class="sub-item-label">RECORD A CUSTOM LEVEL</div>
+            <div class="sub-item-desc">Load an MP3 and tap beats in real-time</div>
+          </div>
+          <div class="sub-item-arrow">→</div>
+        </div>
+      </div>
+      <button class="back-btn" data-target="screen-menu">← BACK</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN: RECORDER
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="screen-recorder">
+    <div class="recorder-ui">
+
+      <div class="recorder-topbar">
+        <button class="back-btn small" data-target="screen-create">← BACK</button>
+        <div class="recorder-title-bar">LEVEL RECORDER</div>
+      </div>
+
+      <input type="file" id="mp3Input" accept="audio/*">
+      <input type="file" id="imgInput" accept="image/*">
+
+      <div class="recorder-body">
+
+        <!-- Grid column -->
+        <div class="recorder-col recorder-col-grid">
+          <div class="grid-wrap">
+            <canvas id="aimCanvas"></canvas>
+            <div class="grid rec-grid" id="recGrid"></div>
+          </div>
+          <div class="status rec-status" id="recStatus">load an mp3 to begin</div>
+        </div>
+
+        <!-- Controls column -->
+        <div class="recorder-col recorder-col-controls">
+
+          <!-- Audio panel -->
+          <div class="rec-panel">
+            <div class="rec-panel-header">
+              <span>MP3 TRACK</span>
+              <span id="audioHeaderTime">—</span>
+            </div>
+            <div class="rec-panel-body">
+              <div class="audio-upload-row">
+                <label for="mp3Input" class="ctrl-btn">+ load mp3</label>
+                <div class="audio-filename" id="audioFilename">no file loaded</div>
+              </div>
+              <div class="progress-wrap" id="progressWrap">
+                <div class="progress-bar" id="progressBar" style="width:0%"></div>
+                <div class="progress-playhead" id="progressPlayhead" style="left:0%"></div>
+                <div class="progress-time" id="progressTime">0:00 / 0:00</div>
+              </div>
+              <div class="audio-controls">
+                <button class="ctrl-btn" id="recBtnPlay" onclick="recTogglePlay()" disabled>▶ play</button>
+                <button class="ctrl-btn" id="recBtnStop" onclick="recStopAudio()" disabled>■ stop</button>
+                <button class="ctrl-btn" id="recBtnRecord" onclick="recToggleRecord()" disabled>● record</button>
+                <button class="ctrl-btn danger" id="recBtnClearBeats" onclick="recClearBeats()" style="margin-left:auto;" disabled>✕ clear</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Beats panel -->
+          <div class="rec-panel" id="recBeatsPanel" style="display:none;">
+            <div class="rec-panel-header">
+              <span>RECORDED BEATS — <span id="beatCount" style="color:var(--accent)">0</span> hits</span>
+              <span style="font-size:10px;">press keys while recording</span>
+            </div>
+            <div class="beats-list" id="beatsList"></div>
+          </div>
+
+          <!-- Key legend -->
+          <div class="rec-panel">
+            <div class="rec-panel-header">
+              <span>KEYBOARD MAP</span>
+              <span style="font-size:10px; color:#333350;">active during recording</span>
+            </div>
+            <div class="key-legend-body" id="keyLegendBody"></div>
+          </div>
+
+          <!-- Export -->
+          <div class="export-actions-row">
+            <button class="btn" onclick="recToggleExport()">export config ↓</button>
+            <button class="btn primary" id="btnDownloadJson" onclick="recDownloadJSON()" style="display:none;">⇓ download .json</button>
+            <button class="btn" id="btnCopyJson" onclick="recCopyJSON()" style="display:none;">⊟ copy</button>
+          </div>
+          <pre class="export-box" id="exportBox" style="display:none;"></pre>
+
+        </div>
+
+        <!-- Timing column -->
+        <div class="recorder-col recorder-col-timing">
+          <div class="rec-panel">
+            <div class="rec-panel-header">
+              <span>ENEMY SPAWN TIMING</span>
+            </div>
+            <div id="timingRows"></div>
+          </div>
+
+          <!-- Shooter images -->
+          <div class="rec-panel">
+            <div class="rec-panel-header"><span>SHOOTER IMAGES</span></div>
+            <div class="shooter-toolbar" id="shooterToolbar"></div>
+          </div>
+        </div>
+
+      </div><!-- end recorder-body -->
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN: SETTINGS
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="screen-settings">
+    <div class="menu-bg-grid"></div>
+    <div class="sub-menu-wrap wide">
+      <div class="sub-title">SETTINGS</div>
+
+      <div class="settings-group">
+        <div class="settings-label">AUDIO</div>
+        <div class="setting-row">
+          <span class="setting-name">Master Volume</span>
+          <div class="setting-control">
+            <input type="range" id="settingVolume" min="0" max="1" step="0.01" value="1">
+            <span class="setting-val" id="settingVolumeVal">100%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-label">GAMEPLAY</div>
+        <div class="setting-row">
+          <span class="setting-name">Note Lead Time</span>
+          <div class="setting-control">
+            <input type="range" id="settingLeadTime" min="0.5" max="5.0" step="0.1" value="2.5">
+            <span class="setting-val" id="settingLeadTimeVal">2.5s</span>
+          </div>
+        </div>
+        <div class="setting-row">
+          <span class="setting-name">Hit Window (±)</span>
+          <div class="setting-control">
+            <input type="range" id="settingHitWindow" min="0.05" max="0.5" step="0.01" value="0.25">
+            <span class="setting-val" id="settingHitWindowVal">0.25s</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="back-btn" data-target="screen-menu">← BACK</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN: CREDITS
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="screen-credits">
+    <div class="menu-bg-grid"></div>
+    <div class="credits-wrap">
+      <div class="sub-title">CREDITS</div>
+
+      <div class="credits-block">
+        <div class="credits-role">LEAD DEVELOPER</div>
+        <div class="credits-name">Developer One</div>
+      </div>
+      <div class="credits-block">
+        <div class="credits-role">GAME DESIGNER &amp; DEVELOPER</div>
+        <div class="credits-name">Developer Two</div>
+      </div>
+
+      <div class="credits-divider"></div>
+
+      <div class="credits-block small">
+        <div class="credits-role">BUILT WITH</div>
+        <div class="credits-name small">Vanilla JS · Web Audio API · Canvas</div>
+      </div>
+      <div class="credits-block small">
+        <div class="credits-role">FONTS</div>
+        <div class="credits-name small">Orbitron · Share Tech Mono · Rajdhani</div>
+      </div>
+
+      <div class="credits-divider"></div>
+      <div class="credits-thanks">Thank you for playing 3bySOUND.</div>
+
+      <button class="back-btn" data-target="screen-menu">← BACK</button>
+    </div>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
