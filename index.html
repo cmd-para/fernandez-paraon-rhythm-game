@@ -166,6 +166,11 @@
         </div>
       </div>
 
+      <div class="now-playing-bar" id="nowPlayingBar" style="display:none;">
+        <span class="now-playing-icon">♪</span>
+        <span class="now-playing-text" id="nowPlayingText">—</span>
+      </div>
+
       <div class="game-container" id="gameArea">
         <canvas id="guideCanvas"></canvas>
         <div class="grid" id="grid"></div>
@@ -361,6 +366,56 @@
         </div>
       </div>
 
+      <div class="settings-group">
+        <div class="settings-label">KEYBINDS</div>
+        <div class="settings-keybind-note">Click a key button, then press any keyboard key to rebind.</div>
+        <div class="keybind-grid">
+          <div class="keybind-row">
+            <div class="keybind-cell" data-cell="tl">
+              <span class="keybind-pos">TOP-LEFT</span>
+              <button class="keybind-btn" id="kb-tl" data-action="tl">Q</button>
+            </div>
+            <div class="keybind-cell" data-cell="tc">
+              <span class="keybind-pos">TOP</span>
+              <button class="keybind-btn" id="kb-tc" data-action="tc">W</button>
+            </div>
+            <div class="keybind-cell" data-cell="tr">
+              <span class="keybind-pos">TOP-RIGHT</span>
+              <button class="keybind-btn" id="kb-tr" data-action="tr">E</button>
+            </div>
+          </div>
+          <div class="keybind-row">
+            <div class="keybind-cell" data-cell="ml">
+              <span class="keybind-pos">LEFT</span>
+              <button class="keybind-btn" id="kb-ml" data-action="ml">A</button>
+            </div>
+            <div class="keybind-cell keybind-cell-center">
+              <span class="keybind-pos">·</span>
+              <span class="keybind-center-icon">⊕</span>
+            </div>
+            <div class="keybind-cell" data-cell="mr">
+              <span class="keybind-pos">RIGHT</span>
+              <button class="keybind-btn" id="kb-mr" data-action="mr">D</button>
+            </div>
+          </div>
+          <div class="keybind-row">
+            <div class="keybind-cell" data-cell="bl">
+              <span class="keybind-pos">BOT-LEFT</span>
+              <button class="keybind-btn" id="kb-bl" data-action="bl">Z</button>
+            </div>
+            <div class="keybind-cell" data-cell="bc">
+              <span class="keybind-pos">BOTTOM</span>
+              <button class="keybind-btn" id="kb-bc" data-action="bc">X</button>
+            </div>
+            <div class="keybind-cell" data-cell="br">
+              <span class="keybind-pos">BOT-RIGHT</span>
+              <button class="keybind-btn" id="kb-br" data-action="br">C</button>
+            </div>
+          </div>
+        </div>
+        <button class="keybind-reset-btn" id="keybindReset">↺ RESET TO DEFAULTS</button>
+      </div>
+
       <button class="back-btn" data-target="screen-menu">← BACK</button>
     </div>
   </div>
@@ -374,12 +429,12 @@
       <div class="sub-title">CREDITS</div>
 
       <div class="credits-block">
-        <div class="credits-role">LEAD DEVELOPER</div>
-        <div class="credits-name">Developer One</div>
+        <div class="credits-role">LEAD DEVELOPER &amp; GAME DESIGNER</div>
+        <div class="credits-name">Josh Heidric C. Paraon</div>
       </div>
       <div class="credits-block">
-        <div class="credits-role">GAME DESIGNER &amp; DEVELOPER</div>
-        <div class="credits-name">Developer Two</div>
+        <div class="credits-role">LEAD DEVELOPER &amp; GAME DESIGNER</div>
+        <div class="credits-name">Jan Lorenze S. Fernandez</div>
       </div>
 
       <div class="credits-divider"></div>

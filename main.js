@@ -65,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     hitWindow = v;
   });
 
+  initKeybinds();
   initSplash();
   initGame();
   initGuideLines();
@@ -118,7 +119,8 @@ function initTicker() {
 /* ══════════════════════════════════════════
    GAME ENGINE
 ══════════════════════════════════════════ */
-const KEY_MAP = { 'q': 'tl', 'w': 'tc', 'e': 'tr', 'a': 'ml', 'd': 'mr', 'z': 'bl', 'x': 'bc', 'c': 'br' };
+const DEFAULT_KEY_MAP = { 'q': 'tl', 'w': 'tc', 'e': 'tr', 'a': 'ml', 'd': 'mr', 'z': 'bl', 'x': 'bc', 'c': 'br' };
+let KEY_MAP = { ...DEFAULT_KEY_MAP };
 
 const CELLS = [
   { id: 'tl', k: 'Q' }, { id: 'tc', k: 'W' }, { id: 'tr', k: 'E' },
@@ -174,6 +176,14 @@ function enterGame(mode) {
     document.getElementById('chartName').textContent = '—';
     statusBar.innerHTML = `loading <span>${lvl.song_name}</span>…`;
 
+    // Show now-playing bar with song info
+    const npBar = document.getElementById('nowPlayingBar');
+    const npText = document.getElementById('nowPlayingText');
+    if (npBar && npText) {
+      npText.textContent = lvl.song_name + (lvl.artist ? '  —  ' + lvl.artist : '');
+      npBar.style.display = 'flex';
+    }
+
     showScreen('screen-game');
 
     loadOfficialLevel(lvl);
@@ -181,6 +191,9 @@ function enterGame(mode) {
     // Custom mode — show the import zone
     importZone.style.display = '';
     statusBar.innerHTML = 'load an mp3 and a json chart to begin';
+    // Hide now-playing bar for custom mode
+    const npBar = document.getElementById('nowPlayingBar');
+    if (npBar) npBar.style.display = 'none';
     showScreen('screen-game');
   }
 }
@@ -1379,4 +1392,108 @@ function initGuideLines() {
   });
 
   onScreenChange();
+}
+/* ══════════════════════════════════════════
+   KEYBIND SYSTEM
+══════════════════════════════════════════ */
+function initKeybinds() {
+  const CELL_IDS = ['tl', 'tc', 'tr', 'ml', 'mr', 'bl', 'bc', 'br'];
+  let listeningBtn = null;
+  let listeningAction = null;
+
+  // Reverse lookup: action → key
+  function reverseMap() {
+    const rev = {};
+    Object.entries(KEY_MAP).forEach(([k, v]) => { rev[v] = k; });
+    return rev;
+  }
+
+  function updateBtnLabels() {
+    const rev = reverseMap();
+    CELL_IDS.forEach(action => {
+      const btn = document.getElementById('kb-' + action);
+      if (btn) btn.textContent = (rev[action] || '?').toUpperCase();
+    });
+    // Also update the cell key labels inside the game grid
+    CELL_IDS.forEach(action => {
+      const cell = document.getElementById('cell-' + action);
+      if (cell) {
+        const keySpan = cell.querySelector('.cell-key');
+        if (keySpan) {
+          const rev2 = reverseMap();
+          keySpan.textContent = (rev2[action] || '?').toUpperCase();
+        }
+      }
+    });
+  }
+
+  function stopListening() {
+    if (listeningBtn) {
+      listeningBtn.classList.remove('listening');
+      listeningBtn.textContent = listeningBtn.dataset.currentKey || '?';
+    }
+    listeningBtn = null;
+    listeningAction = null;
+  }
+
+  CELL_IDS.forEach(action => {
+    const btn = document.getElementById('kb-' + action);
+    if (!btn) return;
+
+    btn.addEventListener('click', () => {
+      if (listeningBtn === btn) {
+        // Already listening — cancel
+        stopListening();
+        return;
+      }
+      stopListening();
+      listeningBtn = btn;
+      listeningAction = action;
+      btn.classList.add('listening');
+      btn.textContent = '…';
+    });
+  });
+
+  document.addEventListener('keydown', e => {
+    if (!listeningAction) return;
+
+    // Ignore modifier keys, Escape cancels
+    if (e.key === 'Escape') { stopListening(); return; }
+    if (['Shift', 'Control', 'Alt', 'Meta', 'Tab'].includes(e.key)) return;
+
+    e.preventDefault();
+
+    const newKey = e.key.toLowerCase();
+
+    // Don't allow binding a key already in use by a different action
+    const existingAction = KEY_MAP[newKey];
+    if (existingAction && existingAction !== listeningAction) {
+      // Swap: remove old binding for that key
+      delete KEY_MAP[newKey];
+    }
+
+    // Remove old key binding for this action
+    Object.keys(KEY_MAP).forEach(k => {
+      if (KEY_MAP[k] === listeningAction) delete KEY_MAP[k];
+    });
+
+    // Set new binding
+    KEY_MAP[newKey] = listeningAction;
+    listeningBtn.dataset.currentKey = newKey.toUpperCase();
+    stopListening();
+    updateBtnLabels();
+  });
+
+  // Reset button
+  const resetBtn = document.getElementById('keybindReset');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      stopListening();
+      KEY_MAP = { ...DEFAULT_KEY_MAP };
+      updateBtnLabels();
+    });
+  }
+
+  // Init labels on load
+  updateBtnLabels();
 }

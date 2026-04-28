@@ -1987,3 +1987,145 @@ label.ctrl-btn:hover {
   70%  { opacity: 1; transform: scale(1.0); }
   100% { opacity: 0; transform: scale(0.7); }
 }
+/* ══════════════════════════════════════════
+   KEYBIND SETTINGS
+══════════════════════════════════════════ */
+.settings-keybind-note {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  margin-bottom: 14px;
+}
+
+.keybind-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.keybind-row {
+  display: flex;
+  gap: 8px;
+}
+
+.keybind-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 90px;
+}
+
+.keybind-cell-center {
+  justify-content: center;
+}
+
+.keybind-pos {
+  font-size: 8px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.keybind-btn {
+  width: 56px;
+  height: 38px;
+  background: var(--panel);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  color: var(--accent);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s, box-shadow 0.15s;
+  letter-spacing: 0.08em;
+}
+
+.keybind-btn:hover {
+  border-color: var(--accent);
+  background: rgba(124, 111, 255, 0.1);
+}
+
+.keybind-btn.listening {
+  border-color: var(--accent2);
+  background: rgba(255, 107, 157, 0.15);
+  color: var(--accent2);
+  box-shadow: 0 0 12px rgba(255, 107, 157, 0.4);
+  animation: keybind-pulse 0.7s ease-in-out infinite alternate;
+}
+
+@keyframes keybind-pulse {
+  from { box-shadow: 0 0 8px rgba(255, 107, 157, 0.3); }
+  to   { box-shadow: 0 0 18px rgba(255, 107, 157, 0.7); }
+}
+
+.keybind-center-icon {
+  font-size: 20px;
+  color: var(--muted);
+  line-height: 1;
+}
+
+.keybind-reset-btn {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  padding: 7px 16px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  margin-top: 4px;
+}
+
+.keybind-reset-btn:hover {
+  border-color: var(--accent3);
+  color: var(--accent3);
+}
+
+/* ══════════════════════════════════════════
+   NOW PLAYING BAR (game screen)
+══════════════════════════════════════════ */
+.now-playing-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 7px 22px;
+  background: rgba(15, 15, 28, 0.85);
+  border: 1px solid rgba(124, 111, 255, 0.25);
+  border-radius: 30px;
+  backdrop-filter: blur(6px);
+  margin-bottom: 6px;
+  max-width: 480px;
+  width: fit-content;
+  align-self: center;
+}
+
+.now-playing-icon {
+  font-size: 14px;
+  color: var(--accent);
+  animation: now-playing-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes now-playing-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+.now-playing-text {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 360px;
+}
