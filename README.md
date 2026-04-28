@@ -18,7 +18,6 @@ A browser-based rhythm game built entirely with Vanilla JavaScript, the Web Audi
 - [Official Levels CSV](#official-levels-csv)
 - [Level Recorder](#level-recorder)
 - [Settings & Keybinds](#settings--keybinds)
-- [Technical Architecture](#technical-architecture)
 - [Credits](#credits)
 
 ---
