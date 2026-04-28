@@ -332,25 +332,80 @@ function checkReady() {
 
 function togglePlay() {
   if (!isPlaying) {
-    if (audioPlayer.currentTime === 0 || audioPlayer.ended) {
+    const isFreshStart = audioPlayer.currentTime === 0 || audioPlayer.ended;
+    if (isFreshStart) {
       beats.forEach(b => { b.spawned = false; b.hit = false; });
       activeNotes.forEach(n => n.el.remove());
       activeNotes = [];
       score = 0;
       document.getElementById('score').textContent = '000000';
+      // Run 3-second countdown before starting
+      startGameWithCountdown();
+    } else {
+      // Resuming from pause — no countdown
+      audioPlayer.volume = gameVolume;
+      audioPlayer.play();
+      isPlaying = true;
+      btnPlay.textContent = 'PAUSE';
+      statusBar.innerHTML = '<span>playing</span>';
+      gameLoop();
     }
-    audioPlayer.volume = gameVolume;
-    audioPlayer.play();
-    isPlaying = true;
-    btnPlay.textContent = 'PAUSE';
-    statusBar.innerHTML = '<span>playing</span>';
-    gameLoop();
   } else {
     audioPlayer.pause();
     isPlaying = false;
     btnPlay.textContent = 'RESUME';
     statusBar.innerHTML = 'paused';
   }
+}
+
+function startGameWithCountdown() {
+  btnPlay.disabled = true;
+  btnRestart.disabled = true;
+
+  let count = 3;
+  showGameCountdown(count);
+  statusBar.innerHTML = 'get ready… <span>' + count + '</span>';
+
+  const interval = setInterval(() => {
+    count--;
+    if (count > 0) {
+      showGameCountdown(count);
+      statusBar.innerHTML = 'get ready… <span>' + count + '</span>';
+    } else {
+      clearInterval(interval);
+      hideGameCountdown();
+      btnPlay.disabled = false;
+      btnRestart.disabled = false;
+
+      audioPlayer.volume = gameVolume;
+      audioPlayer.play();
+      isPlaying = true;
+      btnPlay.textContent = 'PAUSE';
+      statusBar.innerHTML = '<span>playing</span>';
+      gameLoop();
+    }
+  }, 1000);
+}
+
+function showGameCountdown(n) {
+  let overlay = document.getElementById('gameCountdownOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'gameCountdownOverlay';
+    overlay.className = 'rec-countdown-overlay';
+    document.getElementById('screen-game').appendChild(overlay);
+  }
+  overlay.innerHTML = '<span class="rec-countdown-num">' + n + '</span>';
+  overlay.classList.add('visible');
+  const numEl = overlay.querySelector('.rec-countdown-num');
+  numEl.classList.remove('pop');
+  void numEl.offsetWidth; // reflow to restart animation
+  numEl.classList.add('pop');
+}
+
+function hideGameCountdown() {
+  const overlay = document.getElementById('gameCountdownOverlay');
+  if (overlay) overlay.classList.remove('visible');
 }
 
 function gameLoop() {
@@ -508,6 +563,7 @@ function confirmRestart() {
   activeNotes = [];
   btnPlay.textContent = 'START GAME';
   statusBar.innerHTML = 'restarted — <span>' + beats.length + ' beats</span> loaded';
+  startGameWithCountdown();
 }
 
 /* ══════════════════════════════════════════
