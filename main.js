@@ -136,9 +136,15 @@ const OFFSET = 800;
 let beats = [];
 let activeNotes = [];
 let score = 0;
+let hits300 = 0;
+let hits100 = 0;
+let hits50 = 0;
+let missCount = 0;
 let isPlaying = false;
 let audioReady = false;
 let chartReady = false;
+
+const MAX_MISSES = 15; // fail threshold
 
 const audioPlayer = document.getElementById('gameAudio');
 const btnPlay = document.getElementById('btnPlay');
@@ -156,6 +162,10 @@ function enterGame(mode) {
   chartReady = false;
   isPlaying = false;
   score = 0;
+  hits300 = 0;
+  hits100 = 0;
+  hits50 = 0;
+  missCount = 0;
   beats = [];
   activeNotes.forEach(n => n.el && n.el.remove());
   activeNotes = [];
@@ -226,6 +236,8 @@ async function loadOfficialLevel(lvl) {
 
     // ── 3. Both loaded — enable play ────────────────────────────────────
     checkReady();
+    // Auto-start: begin the countdown immediately for official levels
+    setTimeout(() => startGameWithCountdown(), 80);
   } catch (err) {
     statusBar.innerHTML = `<span class="err">Failed to load level: ${err.message}</span>`;
     btnPlay.disabled = true;
@@ -239,6 +251,13 @@ function pauseGameForMenu() {
     isPlaying = false;
     if (btnPlay) btnPlay.textContent = 'RESUME';
   }
+  // Hide result overlays if present
+  const fo = document.getElementById('failOverlay');
+  const wo = document.getElementById('winOverlay');
+  if (fo) fo.classList.remove('visible');
+  if (wo) wo.classList.remove('visible');
+  const missBarEl = document.getElementById('missBar');
+  if (missBarEl) missBarEl.remove();
 }
 
 function initGame() {
@@ -321,12 +340,11 @@ function initGame() {
 
   audioPlayer.addEventListener('ended', () => {
     isPlaying = false;
-    btnPlay.textContent = 'RESTART';
-    statusBar.innerHTML = 'finished — score: <span>' + score + '</span>';
     audioPlayer.currentTime = 0;
     beats.forEach(b => { b.spawned = false; b.hit = false; });
     activeNotes.forEach(n => n.el.remove());
     activeNotes = [];
+    showWinScreen();
   });
 }
 
@@ -446,6 +464,12 @@ function updateNotes(now) {
       n.el.classList.add('missed');
       setTimeout(() => n.el.remove(), 300);
       activeNotes.splice(i, 1);
+      missCount++;
+      updateMissDisplay();
+      if (missCount >= MAX_MISSES) {
+        triggerFail();
+        return;
+      }
       continue;
     }
 
@@ -532,6 +556,9 @@ function checkHit(cid) {
   const tier = getTier(delta);
 
   score += tier.points;
+  if (tier.points === 300) hits300++;
+  else if (tier.points === 100) hits100++;
+  else hits50++;
   document.getElementById('score').textContent = score.toString().padStart(6, '0');
 
   const noteRect = n.el.getBoundingClientRect();
@@ -551,6 +578,148 @@ function checkHit(cid) {
   setTimeout(() => { cell.style.borderColor = ''; cell.style.boxShadow = ''; }, 150);
 }
 
+function updateMissDisplay() {
+  let bar = document.getElementById('missBar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'missBar';
+    bar.className = 'miss-bar';
+    document.getElementById('screen-game').appendChild(bar);
+  }
+  const pct = Math.min(missCount / MAX_MISSES, 1);
+  bar.innerHTML = `
+    <div class="miss-bar-label">MISSES <span class="miss-count">${missCount}/${MAX_MISSES}</span></div>
+    <div class="miss-bar-track"><div class="miss-bar-fill" style="width:${pct * 100}%"></div></div>`;
+}
+
+function getrank(s300, s100, s50, misses) {
+  const total = s300 + s100 + s50 + misses;
+  if (total === 0) return 'SS';
+  const pct300 = s300 / total;
+  if (misses === 0 && s50 === 0 && s100 === 0) return 'SS';
+  if (misses === 0 && pct300 >= 0.9) return 'S';
+  if (pct300 >= 0.8 && misses / total < 0.05) return 'A';
+  if (pct300 >= 0.6 && misses / total < 0.1) return 'B';
+  if (pct300 >= 0.4) return 'C';
+  if (pct300 >= 0.2) return 'D';
+  return 'D';
+}
+
+function triggerFail() {
+  audioPlayer.pause();
+  isPlaying = false;
+
+  // Remove miss bar
+  const bar = document.getElementById('missBar');
+  if (bar) bar.remove();
+
+  // Remove countdown if shown
+  hideGameCountdown();
+
+  let overlay = document.getElementById('failOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'failOverlay';
+    overlay.className = 'result-overlay fail-overlay';
+    document.getElementById('screen-game').appendChild(overlay);
+  }
+
+  overlay.innerHTML = `
+    <div class="result-box">
+      <div class="result-icon fail-icon">✕</div>
+      <div class="result-title fail-title">FAILED</div>
+      <div class="result-sub">you missed too many notes</div>
+      <div class="result-score-row">
+        <span class="result-score-label">SCORE</span>
+        <span class="result-score-val">${score.toString().padStart(6, '0')}</span>
+      </div>
+      <div class="result-hits">
+        <div class="result-hit-item t300"><span class="rh-label">300</span><span class="rh-count">${hits300}</span></div>
+        <div class="result-hit-item t100"><span class="rh-label">100</span><span class="rh-count">${hits100}</span></div>
+        <div class="result-hit-item t50"><span class="rh-label">50</span><span class="rh-count">${hits50}</span></div>
+        <div class="result-hit-item tmiss"><span class="rh-label">MISS</span><span class="rh-count">${missCount}</span></div>
+      </div>
+      <div class="result-actions">
+        <button class="btn danger" onclick="retryFromResult()">↺ RETRY</button>
+        <button class="btn" onclick="exitToMenuFromResult()">← MENU</button>
+      </div>
+    </div>`;
+  overlay.classList.add('visible');
+}
+
+function showWinScreen() {
+  // Remove miss bar
+  const bar = document.getElementById('missBar');
+  if (bar) bar.remove();
+
+  const rank = getrank(hits300, hits100, hits50, missCount);
+  const rankColors = { SS: '#f1fa8c', S: '#50fa7b', A: '#8be9fd', B: '#7c6fff', C: '#ffb86c', D: '#ff5555' };
+  const rankColor = rankColors[rank] || '#e0deff';
+
+  let overlay = document.getElementById('winOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'winOverlay';
+    overlay.className = 'result-overlay win-overlay';
+    document.getElementById('screen-game').appendChild(overlay);
+  }
+
+  overlay.innerHTML = `
+    <div class="result-box">
+      <div class="result-rank" style="color:${rankColor};text-shadow:0 0 24px ${rankColor}88;">${rank}</div>
+      <div class="result-title win-title">CLEARED!</div>
+      <div class="result-score-row">
+        <span class="result-score-label">SCORE</span>
+        <span class="result-score-val">${score.toString().padStart(6, '0')}</span>
+      </div>
+      <div class="result-hits">
+        <div class="result-hit-item t300"><span class="rh-label">300</span><span class="rh-count">${hits300}</span></div>
+        <div class="result-hit-item t100"><span class="rh-label">100</span><span class="rh-count">${hits100}</span></div>
+        <div class="result-hit-item t50"><span class="rh-label">50</span><span class="rh-count">${hits50}</span></div>
+        <div class="result-hit-item tmiss"><span class="rh-label">MISS</span><span class="rh-count">${missCount}</span></div>
+      </div>
+      <div class="result-actions">
+        <button class="btn" onclick="retryFromResult()">↺ RETRY</button>
+        <button class="btn" onclick="exitToMenuFromResult()">← MENU</button>
+      </div>
+    </div>`;
+  overlay.classList.add('visible');
+}
+
+function retryFromResult() {
+  // Hide result overlays
+  const fo = document.getElementById('failOverlay');
+  const wo = document.getElementById('winOverlay');
+  if (fo) fo.classList.remove('visible');
+  if (wo) wo.classList.remove('visible');
+  // Full restart
+  audioPlayer.pause();
+  audioPlayer.currentTime = 0;
+  isPlaying = false;
+  score = 0;
+  hits300 = 0;
+  hits100 = 0;
+  hits50 = 0;
+  missCount = 0;
+  document.getElementById('score').textContent = '000000';
+  beats.forEach(b => { b.spawned = false; b.hit = false; });
+  activeNotes.forEach(n => n.el.remove());
+  activeNotes = [];
+  startGameWithCountdown();
+}
+
+function exitToMenuFromResult() {
+  const fo = document.getElementById('failOverlay');
+  const wo = document.getElementById('winOverlay');
+  if (fo) fo.classList.remove('visible');
+  if (wo) wo.classList.remove('visible');
+  const bar = document.getElementById('missBar');
+  if (bar) bar.remove();
+  audioPlayer.pause();
+  isPlaying = false;
+  showScreen('screen-play');
+}
+
 function askRestart() {
   if (isPlaying) {
     audioPlayer.pause();
@@ -566,10 +735,21 @@ function cancelRestart() {
 
 function confirmRestart() {
   confirmOverlay.classList.remove('visible');
+  // Hide any result screens
+  const fo = document.getElementById('failOverlay');
+  const wo = document.getElementById('winOverlay');
+  if (fo) fo.classList.remove('visible');
+  if (wo) wo.classList.remove('visible');
+  const missBarEl = document.getElementById('missBar');
+  if (missBarEl) missBarEl.remove();
   audioPlayer.pause();
   audioPlayer.currentTime = 0;
   isPlaying = false;
   score = 0;
+  hits300 = 0;
+  hits100 = 0;
+  hits50 = 0;
+  missCount = 0;
   document.getElementById('score').textContent = '000000';
   beats.forEach(b => { b.spawned = false; b.hit = false; });
   activeNotes.forEach(n => n.el.remove());
