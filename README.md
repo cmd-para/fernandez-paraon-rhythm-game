@@ -4,6 +4,9 @@
 
 A browser-based rhythm game built entirely with Vanilla JavaScript, the Web Audio API, and HTML5 Canvas. Players hit notes as they fly in from eight directions toward a 3×3 grid — no plugins, no frameworks, just the web platform.
 
+<img width="1855" height="1077" alt="image" src="https://github.com/user-attachments/assets/b69c1d17-8f71-4782-9e3a-8d5916d604bc" />
+
+
 ---
 
 ## Table of Contents
@@ -33,6 +36,9 @@ A browser-based rhythm game built entirely with Vanilla JavaScript, the Web Audi
 ```
 
 Notes travel along guide-lines from the screen's edges toward their target cell. The player must press the assigned key at the right moment to score a hit.
+
+<img width="1850" height="1075" alt="image" src="https://github.com/user-attachments/assets/663433ac-78f6-4d71-b192-9914e740c731" />
+
 
 ---
 
@@ -201,6 +207,9 @@ To add a new official level, place the MP3 and JSON chart in the appropriate `as
 ## Level Recorder
 
 The **RECORD A CUSTOM LEVEL** tool lets you chart any MP3 from scratch in real-time.
+
+<img width="1853" height="1079" alt="image" src="https://github.com/user-attachments/assets/c709b300-212b-47a8-968c-359e2786866b" />
+
 
 ### Workflow
 
